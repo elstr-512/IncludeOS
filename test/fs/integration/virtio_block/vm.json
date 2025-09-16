@@ -1,7 +1,0 @@
-{
-  "drives" : [{"file" : "image.img",
-               "type" : "virtio",
-               "format": "raw",
-               "media": "disk" }],
-  "intrusive" : "True"
-}

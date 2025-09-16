@@ -1,9 +1,0 @@
-{
-  "drives"  : [{
-    "file" : "../my.disk",
-    "type" : "ide",
-    "format" : "raw",
-    "media" : "disk"
-  }],
-  "intrusive" : "True"
-}

@@ -1,8 +1,0 @@
-{
-  "net" : [{"device" : "virtio"}],
-  "image" : "kernel_modules.img",
-  "modules" : [
-    {"path" : "kernel_modules", "args" : "loaded as module"}
-  ],
-  "mem" : 128
-}

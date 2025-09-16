@@ -1,2 +1,0 @@
-# Tar.gz Test Service
-
