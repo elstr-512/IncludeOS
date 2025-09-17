@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.6)
 
+### >>> Print CMake vars example
+function(debug_msg arg1)
+  message(STATUS ">>> DEBUG: ${arg1} = ${${arg1}}")
+endfunction()
+
 #we are only creating libraries for ELF
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 project (includeos C CXX)
 
-option(SMP "Compile with SMP (multiprocessing)" ON)
+option(SMP "Compile with SMP (multiprocessing)" OFF)
 option(PROFILE "Compile with startup profilers" OFF)
 
 include(cmake/includeos.cmake)
