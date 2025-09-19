@@ -1,24 +1,46 @@
 let
     nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/24.05.tar.gz";
-  pkgs = (import nixpkgs {}).pkgsCross.aarch64-multiplatform;
+    pkgs = (import nixpkgs {}).pkgsCross.aarch64-multiplatform;
+
+    uzlib = pkgs.callPackage ./deps/uzlib/default.nix { };
 in
 
 # callPackage is needed due to https://github.com/NixOS/nixpkgs/pull/126844
 pkgs.pkgsStatic.callPackage ({ mkShell, zlib, pkg-config, file }: mkShell {
+
   # these tools run on the build platform, but are configured to target the host platform
   nativeBuildInputs = [ pkg-config file ];
+
   # libraries needed for the host platform
-  buildInputs = [ zlib ];
+  # libraries compiled for the *target* platform
+  buildInputs = with pkgs; [
+    uzlib
+    openssl
+    rapidjson
+    http-parser
+    botan2
+    s2n-tls
+  ];
 
   # Environment helpers
   shellHook = ''
-    export BUILDPATH="build"
+    PROJECTDIR="$(pwd)"
+    BUILDPATH="$PROJECTDIR/build"
+    rm -rf "$BUILDPATH"
     mkdir -p "$BUILDPATH"
     pushd "$BUILDPATH"
 
     echo -e "\n- - - - The C++ compiler set to: $CXX - - - -"
     echo $(which $CXX)
-    echo "rm -rf * ; cmake -DARCH=aarch64 .. ; cmake --build ."
+
+    CMAKEFLAGS=""
+    CMAKEFLAGS+=" -DARCH=aarch64 "
+    CMAKEFLAGS+=" -DCMAKE_C_FLAGS="-I$PROJECTDIR/api" "
+    CMAKEFLAGS+=" -DCMAKE_CXX_FLAGS="-I$PROJECTDIR/api" "
+
+    echo -e "\nWORK IN PROGRESS BUILD WITH THIS I GUESS:"
+    echo "cmake $CMAKEFLAGS .. ; cmake --build ."
+
   '';
 }) {}
 

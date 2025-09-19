@@ -24,6 +24,7 @@
 #include <map>
 #include <span>
 #include <string>
+#include <limits>
 
 namespace os::mem {
 

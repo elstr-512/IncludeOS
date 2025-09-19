@@ -19,6 +19,7 @@
 #include <array>
 
 #include <util/percent_encoding.hpp>
+#include <cstdint>
 
 ///////////////////////////////////////////////////////////////////////////////
 static inline std::string decode_error(std::string res) {

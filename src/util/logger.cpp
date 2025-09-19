@@ -17,6 +17,7 @@
 
 #include <util/logger.hpp>
 #include <likely>
+#include <algorithm>
 
 Logger::Logger(Log& log, Log::size_type pos)
 : log_(log), pos_{&log_, pos}

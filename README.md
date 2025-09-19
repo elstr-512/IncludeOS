@@ -1,5 +1,12 @@
 IncludeOS
 ================================================
+ARM WIP:
+
+use the doc-shell
+```sh
+nix-shell doc-shell.nix
+```
+================================================
 
 **IncludeOS** is an includable, minimal [unikernel](https://en.wikipedia.org/wiki/Unikernel) operating system for C++ services running in the cloud and on real HW. Starting a program with `#include <os>` will literally include a tiny operating system into your service during link-time.
 

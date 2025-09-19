@@ -10,10 +10,13 @@ let
   # cross = pkgs.pkgsCross.aarch64-multiplatform-musl;
 in
 
+assert false; "dont use this shell atm"
+
 pkgs.mkShell.override
 {
   stdenv = pkgs.clangStdenv;
 }
+
 {
   # Tools you run on your own machine (build platform)
   nativeBuildInputs = with pkgs; [
@@ -40,6 +43,7 @@ pkgs.mkShell.override
     echo -e "\n- - - - The C++ compiler set to: $CXX - - - -"
     echo $(which $CXX)
     echo "rm -rf * ; cmake -DARCH=aarch64 .. ; cmake --build ."
+    echo 'rm -rf * ; cmake -DARCH=aarch64 cmake -DCMAKE_C_FLAGS="-I/home/ee/workspace/IncludeOS-dir/IncludeOS-fork3/api" -DCMAKE_CXX_FLAGS="-I/home/ee/workspace/IncludeOS-dir/IncludeOS-fork3/api" .. ; cmake --build .'
   '';
 }
 

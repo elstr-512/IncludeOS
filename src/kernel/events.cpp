@@ -21,6 +21,8 @@
 #include <statman>
 #include <smp>
 #include <arch.hpp>
+#include <cstring>
+
 //#define DEBUG_SMP
 
 static SMP::Array<Events> managers;
