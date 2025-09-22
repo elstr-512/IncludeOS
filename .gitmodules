@@ -1,0 +1,3 @@
+[submodule "deps/libfdt/dtc"]
+	path = deps/libfdt/dtc
+	url = https://android.googlesource.com/platform/external/dtc
