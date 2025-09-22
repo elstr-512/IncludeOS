@@ -6,6 +6,9 @@ use the doc-shell
 ```sh
 nix-shell doc-shell.nix
 ```
+
+cmake  -DARCH=aarch64 -DARCH_aarch64=ON -DCMAKE_C_FLAGS='-I/home/ee/IncludeOS-dir/IncludeOS-fork3/api -I/nix/store/8qb293s28rycyiqni4rpcmimvnbxdxmi-botan-aarch64-unknown-linux-gnu-2.19.4-dev/include/botan-2'  -DCMAKE_CXX_FLAGS='-I/home/ee/IncludeOS-dir/IncludeOS-fork3/api -I/nix/store/8qb293s28rycyiqni4rpcmimvnbxdxmi-botan-aarch64-unknown-linux-gnu-2.19.4-dev/include/botan-2'  -DCMAKE_SYSTEM_NAME=Linux  -DCMAKE_SYSTEM_PROCESSOR=aarch64  -DCMAKE_C_COMPILER=aarch64-unknown-linux-musl-gcc  -DCMAKE_CXX_COMPILER=aarch64-unknown-linux-musl-g++  .. ; cmake --build .
+
 ================================================
 
 **IncludeOS** is an includable, minimal [unikernel](https://en.wikipedia.org/wiki/Unikernel) operating system for C++ services running in the cloud and on real HW. Starting a program with `#include <os>` will literally include a tiny operating system into your service during link-time.

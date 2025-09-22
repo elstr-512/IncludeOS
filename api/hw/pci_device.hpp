@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <vector>
 #include <unordered_map>
+#include <string>
+#include <array>
 
 #define  PCI_CAP_ID_AF        0x13	/* PCI Advanced Features */
 #define  PCI_CAP_ID_MAX       PCI_CAP_ID_AF

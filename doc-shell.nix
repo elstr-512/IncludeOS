@@ -9,7 +9,12 @@ in
 pkgs.pkgsStatic.callPackage ({ mkShell, zlib, pkg-config, file }: mkShell {
 
   # these tools run on the build platform, but are configured to target the host platform
-  nativeBuildInputs = [ pkg-config file ];
+  nativeBuildInputs = with pkgs.buildPackages; [
+    pkg-config
+    file
+    cmake
+    ninja
+  ];
 
   # libraries needed for the host platform
   # libraries compiled for the *target* platform
@@ -26,21 +31,31 @@ pkgs.pkgsStatic.callPackage ({ mkShell, zlib, pkg-config, file }: mkShell {
   shellHook = ''
     PROJECTDIR="$(pwd)"
     BUILDPATH="$PROJECTDIR/build"
-    rm -rf "$BUILDPATH"
+    # rm -rf "$BUILDPATH"
     mkdir -p "$BUILDPATH"
     pushd "$BUILDPATH"
 
     echo -e "\n- - - - The C++ compiler set to: $CXX - - - -"
     echo $(which $CXX)
 
+    INCLUDEPATHS=""
+    INCLUDEPATHS+="-I$PROJECTDIR/api "
+    INCLUDEPATHS+="-I${pkgs.botan2.dev}/include/botan-2 "
+
     CMAKEFLAGS=""
     CMAKEFLAGS+=" -DARCH=aarch64 "
-    CMAKEFLAGS+=" -DCMAKE_C_FLAGS="-I$PROJECTDIR/api" "
-    CMAKEFLAGS+=" -DCMAKE_CXX_FLAGS="-I$PROJECTDIR/api" "
+
+    CMAKEFLAGS+=" -DCMAKE_C_FLAGS='$INCLUDEPATHS' "
+    CMAKEFLAGS+=" -DCMAKE_CXX_FLAGS='$INCLUDEPATHS' "
+
+    CMAKEFLAGS+=" -DCMAKE_SYSTEM_NAME=Linux "
+    CMAKEFLAGS+=" -DCMAKE_SYSTEM_PROCESSOR=aarch64 "
+
+    CMAKEFLAGS+=" -DCMAKE_C_COMPILER=$CC "
+    CMAKEFLAGS+=" -DCMAKE_CXX_COMPILER=$CXX "
 
     echo -e "\nWORK IN PROGRESS BUILD WITH THIS I GUESS:"
-    echo "cmake $CMAKEFLAGS .. ; cmake --build ."
-
+    echo "cmake $CMAKEFLAGS .. && cmake --build ."
   '';
 }) {}
 

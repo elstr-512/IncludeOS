@@ -15,6 +15,13 @@ option(PROFILE "Compile with startup profilers" OFF)
 
 include(cmake/includeos.cmake)
 
+# Force libfdt headers into all builds (gpt slop)
+include_directories(${CMAKE_SOURCE_DIR}/deps/libfdt/dtc/libfdt)
+# Build libfdt first
+add_subdirectory(deps/libfdt)
+# Then ensure the final kernel links to it
+set(KERNEL_LIBS ${KERNEL_LIBS} fdt)
+
 add_subdirectory(src)
 
 # Install cmake files

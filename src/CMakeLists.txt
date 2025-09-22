@@ -71,7 +71,7 @@ add_library(os STATIC ${SRCS} ${OBJECTS} ${CMAKE_CURRENT_BINARY_DIR}/version.h)
 if (NOT CMAKE_TESTING_ENABLED)
   add_subdirectory(arch)
   add_subdirectory(platform)
-  add_subdirectory(drivers)
+  # add_subdirectory(drivers) / TODO: aarch64 hmmmmmmmm
   add_subdirectory(plugins)
   add_subdirectory(musl)
 endif()

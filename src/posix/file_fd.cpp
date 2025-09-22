@@ -153,7 +153,7 @@ long File_FD::getdents(struct dirent *dirp, unsigned int count)
     written += dirp->d_reclen;
 
     // add the filename
-    std::strncpy(dirp->d_name, name.data(), namelen);
+    strncpy(dirp->d_name, name.data(), namelen);
 
     // iterate to next
     ptr += dirp->d_reclen;

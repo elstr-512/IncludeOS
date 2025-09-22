@@ -35,12 +35,14 @@ namespace os {
     static constexpr const char* name               = "aarch64";
     static inline uint64_t cpu_cycles() noexcept;
 
-    // TODO: aarch64 WIP
+    // TODO: aarch64
     static inline void cpu_relax() noexcept;
+    static inline void read_memory_barrier() noexcept;
+    static inline void write_memory_barrier() noexcept;
   };
 }
 
-// TODO: IMPL aarch64 WIP
+// TODO: IMPL aarch64
 constexpr uintptr_t __arch_max_canonical_addr = 0x7ffffffffff;
 uint64_t os::Arch::cpu_cycles() noexcept {
   uint64_t ret;
@@ -49,7 +51,9 @@ uint64_t os::Arch::cpu_cycles() noexcept {
   return ret;
 }
 
-// TODO: IMPL aarch64 WIP
+// TODO: IMPL aarch64
+inline void os::Arch::read_memory_barrier() noexcept {}
+inline void os::Arch::write_memory_barrier() noexcept {}
 inline void os::Arch::cpu_relax() noexcept {
 }
 #endif //AARCH64_ARCH_HPP
