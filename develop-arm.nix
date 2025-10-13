@@ -1,5 +1,6 @@
 # develop-arm.nix
 # sets up a development shell in which you can open your editor
+# nix-shell develop-arm.nix --arg withCcache true
 {
   buildpath ? "build-${arch}"
 
@@ -132,19 +133,19 @@ includeos.pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
         # cmake -B ${buildpath} -D ARCH="${arch}" 2>&1 | tee -a "$LOGFILE"
         # (cd ${buildpath} && make 2>&1 | tee -a "$LOGFILE")
 
-        echo -e "\n grep DEBUG $LOGFILE:"
-        grep DEBUG "$LOGFILE"
+        # echo -e "\n grep DEBUG $LOGFILE:"
+        # grep DEBUG "$LOGFILE"
 
         # echo -e "\n grep x86 $LOGFILE:"
         # grep x86 "$LOGFILE"
 
-        echo -e "\n nm -C platform/libaarch64_default.a | grep fdt"
-        nm -C ${includeos}/platform/libaarch64_default.a | grep fdt
+        # echo -e "\n nm -C platform/libaarch64_default.a | grep fdt"
+        # nm -C ${includeos}/platform/libaarch64_default.a | grep fdt
 
         echo -e "\n aarch64 result (nix derivation) ->"
         echo -e "${includeos}\n"
 
-        echo -e "\n rebuild unikernel"
+        echo -e "\n rebuild unikernel ->"
         echo -e "cmake -B ${buildpath} && (cd ${buildpath}; make)"
 
       fi
