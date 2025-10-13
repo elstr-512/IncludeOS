@@ -142,6 +142,13 @@ final: prev: {
         prev.buildPackages.nasm
       ] ++ prev.lib.optionals withCcache [self.ccacheWrapper ccacheNoticeHook];
 
+
+      aarch64_inputs =
+          if self.stdenv.targetPlatform.system == "aarch64-linux" then [
+            prev.python313Packages.libfdt
+          ]
+          else [];
+
       buildInputs = [
         self.botan2
         self.http-parser
@@ -150,7 +157,7 @@ final: prev: {
         #self.s2n-tls          👈 This is postponed until we can fix the s2n build.
         self.uzlib
         self.vmbuild
-      ];
+      ] ++ aarch64_inputs;
 
       postInstall = ''
         echo Copying vmbuild binaries to tools/vmbuild
@@ -169,6 +176,8 @@ final: prev: {
           "-DARCH=i686"
           "-DPLATFORM=nano" # we currently only support nano platform on i686
         ]
+      else if self.stdenv.targetPlatform.system == "aarch64-linux" then
+        ["-DARCH=aarch64"]
       else
         [ "-DARCH=x86_64"];
 
