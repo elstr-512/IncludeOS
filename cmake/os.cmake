@@ -1,3 +1,6 @@
+include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
+debug_msg("> FILE cmake/os.cmake")
+
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -22,15 +25,25 @@ endif()
 if (NOT DEFINED PLATFORM)
   if (DEFINED ENV{PLATFORM})
     set(PLATFORM $ENV{PLATFORM})
+  elseif("${ARCH}" STREQUAL "aarch64")
+    set(PLATFORM default)
   else()
     set(PLATFORM x86_pc)
   endif()
 endif()
+debug_var(PLATFORM)
 
 
 set(NAME_STUB "${INCLUDEOS_PACKAGE}/src/service_name.cpp")
 
-set(TRIPLE "${ARCH}-pc-linux-elf")
+if ("${ARCH}" STREQUAL "aarch64")
+  set(TRIPLE "${ARCH}-unknown-linux-musl")
+else()
+  set(TRIPLE "${ARCH}-pc-linux-elf")
+endif()
+
+message(STATUS "Target CPU ${ARCH}")
+debug_msg("Target CPU ${ARCH}")
 
 
 if (ELF_SYMBOLS)
@@ -45,7 +58,11 @@ if (DISKBUILDER-NOTFOUND)
   message(FATAL_ERROR "diskbuilder not found")
 endif()
 
-set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/linker.ld)
+if ("${ARCH}" STREQUAL "aarch64")
+  set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/aarch64/linker.ld) # TODO: what
+else()
+  set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/linker.ld)
+endif()
 
 include_directories(
   ${INCLUDEOS_PACKAGE}/include/os
@@ -170,17 +187,29 @@ function(os_add_executable TARGET NAME)
     set(LIBGCC libclang_rt.builtins-${ARCH}.a)
   endif()
 
-  set(LIBRARIES
-    ${INCLUDEOS_PACKAGE}/lib/libos.a
-    ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
-    ${INCLUDEOS_PACKAGE}/lib/libarch.a
-    ${INCLUDEOS_PACKAGE}/lib/libos.a
-    ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
-    ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
-    ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
-    ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
-    ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
-  )
+  if (${ARCH} STREQUAL "aarch64")
+    set(LIBRARIES
+      ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/aarch64/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
+      ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
+      ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
+      ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
+      ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+    )
+  else()
+    set(LIBRARIES
+      ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
+      ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
+      ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
+      ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
+      ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+    )
+  endif()
 
   message(STATUS ">>>>> 👉 Libraries: ${LIBRARIES}")
   foreach(_LIB ${LIBRARIES})
@@ -278,10 +307,19 @@ function (os_add_library_from_path TARGET LIBRARY PATH)
 endfunction()
 
 function (os_add_drivers TARGET)
+
   foreach(DRIVER ${ARGN})
+    debug_var(DRIVER)
+  endforeach()
+
+  debug_msg("os_add_library_from_path ->")
+  foreach(DRIVER ${ARGN})
+    debug_msg("trying ${DRIVER}")
     #if in conan expect it to be in order ?
     os_add_library_from_path(${TARGET} ${DRIVER} "${INCLUDEOS_PACKAGE}/drivers")
   endforeach()
+
+  debug_msg("os_add_library_from_path COMPLETE")
 endfunction()
 
 function(os_add_plugins TARGET)
@@ -292,6 +330,7 @@ endfunction()
 
 function (os_add_stdout TARGET DRIVER)
    os_add_library_from_path(${TARGET} ${DRIVER} "${INCLUDEOS_PACKAGE}/drivers/stdout")
+   debug_msg("os_add_stdout -> ${DRIVER}")
 endfunction()
 
 

@@ -1,4 +1,7 @@
-#includeos standard settings for compilation and linkers
+# cmake/includeos.cmake
+# includeos standard settings for compilation and linkers
+include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
+debug_msg("> FILE cmake/includeos.cmake")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,10 +21,15 @@ add_definitions(-DARCH_${ARCH})
 add_definitions(-DARCH="${ARCH}")
 
 message(STATUS "Target CPU ${ARCH}")
-set(TRIPLE "${ARCH}-pc-linux-elf")
+debug_msg("Target CPU ${ARCH}")
+if ("${ARCH}" STREQUAL "aarch64")
+  set(TRIPLE "${ARCH}-unknown-linux-musl")
+else()
+  set(TRIPLE "${ARCH}-pc-linux-elf")
+endif()
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
-message(STATUS "Target triple ${TRIPLE}")
+debug_msg("Target triple ${TRIPLE}")
 
 
 set(CAPABS "${CAPABS} -g -fstack-protector-strong")

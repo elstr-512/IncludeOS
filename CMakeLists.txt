@@ -9,6 +9,7 @@ option(SMP "Compile with SMP (multiprocessing)" ON)
 option(PROFILE "Compile with startup profilers" OFF)
 
 include(cmake/includeos.cmake)
+include(cmake/utils.cmake)
 
 add_subdirectory(src)
 
@@ -16,6 +17,7 @@ add_subdirectory(src)
 install(FILES cmake/linux.service.cmake DESTINATION cmake)
 install(FILES cmake/os.cmake DESTINATION cmake)
 install(FILES cmake/includeos.cmake DESTINATION cmake)
+install(FILES cmake/utils.cmake DESTINATION cmake)
 
 # Install config to enable find_package(IncludeOS)
 include(CMakePackageConfigHelpers)

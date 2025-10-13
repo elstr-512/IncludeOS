@@ -1,5 +1,13 @@
 # Config file to be picked up by find_package()
 @PACKAGE_INIT@
-set(ARCH "x86_64")
+include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
+debug_msg("> FILE cmake/includeos-config.cmake.in")
+
+if(NOT ARCH)
+  set(ARCH "x86_64")
+  debug_msg("ARCH not set. Defaulting to x86_64")
+endif()
+debug_var(ARCH)
+
 set(INCLUDEOS_PACKAGE @CMAKE_INSTALL_PREFIX@)
 set(CMAKE_MODULE_PATH @CMAKE_INSTALL_PREFIX@/cmake)
