@@ -4,6 +4,7 @@
 # e.g. several network drivers, which will result in conflicting symbols
 #
 # ...There are probably nicer solutions, so please PR if you know them.
+debug_msg("> FILE src/drivers/CMakeLists.txt")
 
 # make LiveUpdate visible to drivers systemlog.. yet another DEP!!
 include_directories(${INCLUDEOS_ROOT}/lib/LiveUpdate)
@@ -27,14 +28,22 @@ set(DRIVER_SRCS
 )
 
 if (${PLATFORM} STREQUAL "default")
-  list(APPEND DRIVER_SRCS
-      vga_emergency.cpp
-    virtiocon.cpp
-    virtioblk.cpp
-    virtionet.cpp
-    vmxnet3.cpp
-    e1000.cpp
+
+  if (
+  "${ARCH}" STREQUAL "i687" OR "${ARCH}" STREQUAL "i386" OR "${ARCH}" STREQUAL "x86_64"
   )
+    list(APPEND DRIVER_SRCS
+      vga_emergency.cpp
+      virtiocon.cpp
+      virtioblk.cpp
+      virtionet.cpp
+      vmxnet3.cpp
+      e1000.cpp
+    )
+  elseif("${ARCH}" STREQUAL "aarch64")
+    # TODO: IMPLEMENT ME
+  endif()
+
 elseif (${PLATFORM} STREQUAL "solo5-hvt" OR ${PLATFORM} STREQUAL "solo5-spt")
   list(APPEND DRIVER_SRCS
     solo5blk.cpp
@@ -43,6 +52,7 @@ elseif (${PLATFORM} STREQUAL "solo5-hvt" OR ${PLATFORM} STREQUAL "solo5-spt")
 endif()
 set(DRIVERS "")
 foreach(DRIVER ${DRIVER_SRCS})
+  debug_var(DRIVER)
   get_filename_component(DRIVER_NAME ${DRIVER} NAME_WE)
   add_library(${DRIVER_NAME} STATIC ${DRIVER})
   list(APPEND DRIVERS ${DRIVER_NAME})

@@ -12,7 +12,9 @@ set(SRCS
 
 #if (NOT CMAKE_TESTING_ENABLED)
 
-if (NOT ${PLATFORM} STREQUAL "nano")
+if ("${ARCH}" STREQUAL "aarch64")
+  # do nothing
+elseif (NOT ${PLATFORM} STREQUAL "nano")
   include_directories(${CMAKE_SOURCE_DIR}/lib/LiveUpdate/include)
   list(APPEND SRCS
     memstream.c
