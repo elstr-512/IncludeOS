@@ -197,6 +197,7 @@ function(os_add_executable TARGET NAME)
       ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
       ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
       ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+      ${INCLUDEOS_PACKAGE}/dtc/lib/libfdt.a
     )
   else()
     set(LIBRARIES

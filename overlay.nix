@@ -145,7 +145,7 @@ final: prev: {
 
       aarch64_inputs =
           if self.stdenv.targetPlatform.system == "aarch64-linux" then [
-            prev.python313Packages.libfdt
+            prev.pkgsStatic.dtc
           ]
           else [];
 
@@ -169,6 +169,10 @@ final: prev: {
         cp -r -v ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
         cp -r -v ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
         cp -r -v ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
+      ''
+      + prev.lib.optionalString prev.stdenv.isAarch64 ''
+        mkdir -p $out/dtc/lib
+        cp -r -v ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
       '';
 
       archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
