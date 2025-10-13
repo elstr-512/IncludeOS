@@ -125,16 +125,16 @@ includeos.pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
         LOGFILE=$(pwd)/${arch}-servicebuild.log
         nix log "${includeos}" > "$LOGFILE"
 
-        # [[ -d ${buildpath} ]] && {
-        #   echo "Removing dirty 'example build' directory...";
-        #   rm -rf "${buildpath}";
-        # }
-        #
-        # cmake -B ${buildpath} -D ARCH="${arch}" 2>&1 | tee -a "$LOGFILE"
-        # (cd ${buildpath} && make 2>&1 | tee -a "$LOGFILE")
+        [[ -d ${buildpath} ]] && {
+          echo "Removing dirty 'example build' directory...";
+          rm -rf "${buildpath}";
+        }
 
-        # echo -e "\n grep DEBUG $LOGFILE:"
-        # grep DEBUG "$LOGFILE"
+        cmake -B ${buildpath} -D ARCH="${arch}" 2>&1 | tee -a "$LOGFILE"
+        (cd ${buildpath} && make 2>&1 | tee -a "$LOGFILE")
+
+        echo -e "\n grep DEBUG $LOGFILE:"
+        grep DEBUG "$LOGFILE"
 
         # echo -e "\n grep x86 $LOGFILE:"
         # grep x86 "$LOGFILE"
@@ -146,7 +146,7 @@ includeos.pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
         echo -e "${includeos}\n"
 
         echo -e "\n rebuild unikernel ->"
-        echo -e "cmake -B ${buildpath} && (cd ${buildpath}; make)"
+        echo -e "cmake -B ${buildpath} -D ARCH="${arch}" && (cd ${buildpath}; make)"
 
       fi
 
