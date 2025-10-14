@@ -29,6 +29,9 @@
   # packages configured for the target architecture (arch)
 , crossPkgs ? includeos.pkgs
 
+, u-boot ? import ./uboot-aarch64.nix
+
+, useZsh ? false
 }:
 
 pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
@@ -116,8 +119,8 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
         (cd ${buildpath} && make 2>&1 | tee -a "$LOGFILE")
       }
 
-      echo -e "\n grep DEBUG $LOGFILE:"
-      grep DEBUG "$LOGFILE"
+      # echo -e "\n grep DEBUG $LOGFILE:"
+      # grep DEBUG "$LOGFILE"
 
       # echo -e "\n grep x86 $LOGFILE:"
       # grep x86 "$LOGFILE"
@@ -128,12 +131,33 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
       echo -e "\n aarch64 result (nix derivation) ->"
       echo -e "${includeos}\n"
 
-      echo -e "\n rebuild unikernel ->"
+      echo -e "\n rebuild ->"
       echo -e "cmake -B ${buildpath} -D ARCH="${arch}" && (cd ${buildpath}; make)"
 
+      echo -e "\n"
+
+      cd $IOS_AARCH64_DIR
     fi
 
-    cd $IOS_AARCH64_DIR
+
+    # Create dir for booting (aarch64) includeos
+    [[ -d boot ]] && {
+      rm -rf boot;
+    }
+    mkdir -p boot
+
+    IOS_SERVICE="example/${buildpath}/hello_includeos.elf.bin"
+
+    if [[ -e $IOS_SERVICE ]]; then
+      cp -v $IOS_SERVICE boot/
+      cp -v ${u-boot}/u-boot.bin boot/
+    fi
+
+    # optional zsh
+    if [[ -z "$INSIDE_ZSH" && "${toString useZsh}" ]]; then
+      export INSIDE_ZSH=1
+      exec zsh
+    fi
   '';
 }
 
