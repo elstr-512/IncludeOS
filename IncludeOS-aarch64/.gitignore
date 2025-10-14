@@ -1,0 +1,4 @@
+boot/
+build-aarch64/
+*.log
+compile_commands.json
