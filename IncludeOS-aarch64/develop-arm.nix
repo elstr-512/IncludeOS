@@ -68,10 +68,9 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     echo "Source tree: $IOS_SRC"
 
     # delete old just in case it's dirty
-    # [[ -d ${buildpath} ]] && {
-    #   rm -rf buildpath;
-    # }
-    # mkdir -p ${buildpath}
+    [[ -d ${buildpath} ]] && {
+      rm -rf buildpath;
+    }
 
     # build includeOS
     cmake -S "$IOS_SRC" -B ${buildpath} \
@@ -109,10 +108,10 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
       LOGFILE=$(pwd)/${arch}-servicebuild.log
       nix log "${includeos}" > "$LOGFILE"
 
-      # [[ -d ${buildpath} ]] && {
-      #   echo "Removing dirty 'example build' directory...";
-      #   rm -rf "${buildpath}";
-      # }
+      [[ -d ${buildpath} ]] && {
+        echo "Removing dirty 'example build' directory...";
+        rm -rf "${buildpath}";
+      }
 
       [[ ! -d ${buildpath} ]] && {
         cmake -B ${buildpath} -D ARCH="${arch}" 2>&1 | tee -a "$LOGFILE"
