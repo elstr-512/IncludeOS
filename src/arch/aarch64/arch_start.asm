@@ -41,6 +41,7 @@ __arch_start:
 
     ldr x30, =__stack_top
     mov sp, x30
+    bl kernel_aarch64_hello
 
 
   /*  ldr w0,[x9]

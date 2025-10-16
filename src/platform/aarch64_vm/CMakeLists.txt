@@ -18,6 +18,7 @@ SET(PLATFORM_SOURCES
   exception_handling.cpp
   init_libc.cpp
   sanity_checks.cpp
+  kernel_aarch64_hello.c
 )
 
 #add the arch in include path..
