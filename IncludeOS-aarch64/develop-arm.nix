@@ -152,6 +152,17 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
       cp -v ${u-boot}/u-boot.bin boot/
     fi
 
+
+    echo "" # booting with qemu :p
+    echo "- - - - ~ in boot/ dir ~ - - - -"
+    echo "boot kernel directly:"
+    echo -e "qemu-system-aarch64 -machine virt -cpu cortex-a57 -kernel hello_includeos.elf.bin -nographic \n"
+
+    echo "boot u-boot:"
+    echo "objdump -dC hello_includeos.elf.bin | grep \"<_start>\""
+    echo "qemu-system-aarch64 -machine virt -cpu cortex-a57 -bios u-boot.bin -device loader,file=hello_includeos.elf.bin,addr=0x40200000 -nographic"
+    echo -e "in u-boot bios => go 0x402~>(whatever <_start> is) \n"
+
     # optional zsh
     if [[ -z "$INSIDE_ZSH" && "${toString useZsh}" ]]; then
       export INSIDE_ZSH=1
