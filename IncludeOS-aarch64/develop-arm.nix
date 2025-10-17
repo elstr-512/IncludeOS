@@ -155,7 +155,7 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
 
     echo "" # booting with qemu :p
     echo "- - - - ~ in boot/ dir ~ - - - -"
-    echo "boot kernel directly:"
+    echo "boot kernel directly (not recommended, u-boot handles initialization better):"
     echo -e "qemu-system-aarch64 -machine virt -cpu cortex-a57 -kernel hello_includeos.elf.bin -nographic \n"
 
     echo "boot u-boot:"
