@@ -3,6 +3,9 @@
 #
 
 # IncludeOS install location
+include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
+debug_msg(">>>>>>>> FILE cmake/library.cmake")
+
 if (NOT DEFINED ENV{INCLUDEOS_PREFIX})
   set(ENV{INCLUDEOS_PREFIX} /usr/local)
 endif()
@@ -10,19 +13,29 @@ endif()
 set(INSTALL_LOC $ENV{INCLUDEOS_PREFIX}/includeos)
 
 # TODO: Verify that the OS libraries exist
-set(ARCH x86_64)
+
+if(NOT ARCH)
+  message(FATAL_ERROR "ARCH NOT SET.")
+endif()
+
 if(DEFINED ENV{ARCH})
   set(ARCH $ENV{ARCH})
 endif()
 message(STATUS "Target CPU architecture ${ARCH}")
 
-set(TRIPLE "${ARCH}-pc-linux-elf")
+if ("${ARCH}" STREQUAL "aarch64")
+  set(TRIPLE "${ARCH}-unknown-linux-musl")
+else()
+  set(TRIPLE "${ARCH}-pc-linux-elf")
+endif()
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
 message(STATUS "Target triple ${TRIPLE}")
 
 # Assembler
-if ("${ARCH}" STREQUAL "x86_64")
+if ("${ARCH}" STREQUAL "aarch64")
+  # trust cmake
+elseif ("${ARCH}" STREQUAL "x86_64")
   set (ARCH_INTERNAL "ARCH_X64")
   set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf64")
 else()
