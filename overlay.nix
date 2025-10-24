@@ -162,17 +162,18 @@ final: prev: {
       postInstall = ''
         echo Copying vmbuild binaries to tools/vmbuild
         mkdir -p "$out/tools/vmbuild"
-        cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
-        cp -r -v ${final.stdenvIncludeOS.libraries.libc} $out/libc
+        cp  ${self.vmbuild}/bin/* "$out/tools/vmbuild"
+        cp -r  ${final.stdenvIncludeOS.libraries.libc} $out/libc
         mkdir $out/libcxx
-        cp -r -v ${final.stdenvIncludeOS.libraries.libcxx.lib} $out/libcxx/lib
-        cp -r -v ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
-        cp -r -v ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
-        cp -r -v ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
+        cp -r  ${final.stdenvIncludeOS.libraries.libcxx.lib} $out/libcxx/lib
+        cp -r  ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
+        cp -r  ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
+        cp -r  ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
       ''
       + prev.lib.optionalString prev.stdenv.isAarch64 ''
         mkdir -p $out/dtc/lib
-        cp -r -v ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
+        cp -r  ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
+        cp -r  ${prev.pkgsStatic.dtc}/include $out/dtc/include
       '';
 
       archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
