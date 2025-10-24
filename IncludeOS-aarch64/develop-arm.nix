@@ -7,9 +7,6 @@
   # Path to build directory created by CMake.
   buildpath ? "build-${arch}"
 
-  # Path to your unikernel source. (project root with CMakeLists.txt)
-, unikernel ? "../."
-
   # Enable ccache support. See overlay.nix for details.
 , withCcache ? true
 
@@ -31,7 +28,11 @@
 
 , u-boot ? import ./uboot-aarch64.nix
 
+  # use zsh instead of bash
 , useZsh ? false
+
+  # dont build, just get a shell with handy tools
+, skipBuild ? false
 }:
 
 pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
@@ -57,40 +58,55 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
   ];
 
   shellHook = ''
-    IOS_SRC=${toString ../.}
-    IOS_AARCH64_DIR=${toString ./.}
+    # Check recursive develop-shell
+    if [[ "$INSIDE_DEVELOP_SHELL" ]]; then
+      echo -e "Error: recursive develop-shell ... exiting"
+      exit 1
+    fi
+    export INSIDE_DEVELOP_SHELL=1
 
-    if [ ! -d "$IOS_SRC" ]; then
-        echo "$unikernel is not a valid directory" >&2
-        return 1
+    SKIP_BUILD=${toString skipBuild}
+    USE_ZSH=${toString useZsh}
+    if [[ $SKIP_BUILD ]]; then
+      # optional zsh
+      if [[ -z $INSIDE_ZSH && $USE_ZSH ]]; then
+        export INSIDE_ZSH=1
+        exec zsh
+      fi
+
+      return 0
     fi
 
-    echo "Configuring in: ${buildpath}"
-    echo "Source tree: $IOS_SRC"
+    ROOT_SRC_DIR=${toString ../.}
+    AARCH64_ROOT_DIR=${toString ./.}
+    BUILDPATH=${buildpath}
+    ARCH=${arch}
+    INCLUDEOS=${includeos}
 
     # delete old just in case it's dirty
-    [[ -d ${buildpath} ]] && {
-      rm -rf buildpath;
+    [[ -d $BUILDPATH ]] && {
+      rm -rf $BUILDPATH;
     }
 
     # build includeOS
-    cmake -S "$IOS_SRC" -B ${buildpath} \
+    cmake -S $ROOT_SRC_DIR -B $BUILDPATH \
       -D CMAKE_EXPORT_COMPILE_COMMANDS=ON \
-      -D ARCH=${arch} \
-      -D CMAKE_MODULE_PATH=${includeos}/cmake
+      -D ARCH=$ARCH \
+      -D CMAKE_MODULE_PATH=$INCLUDEOS/cmake
 
     # procuced by CMake
-    CCDB="${buildpath}/compile_commands.json"
+    CCDB="$BUILDPATH/compile_commands.json"
 
-    #
     # attempting to use -resource-dir with 'clang++ -print-resource-dir'
     # doesn't work here as we're using -nostdlib/-nostdlibinc
-    #
+    IOS_LIB_LICXX_INCLUDE=${includeos.libraries.libcxx.include}
+    IOS_LIB_LIBC=${includeos.libraries.libc}
+
     tmp="$CCDB.clangd.tmp"
     jq \
-      --arg libcxx "${includeos.libraries.libcxx.include}" \
-      --arg libc "${includeos.libraries.libc}"             \
-      --arg localsrc "${toString ./.}"                           \
+      --arg libcxx "$IOS_LIB_LICXX_INCLUDE" \
+      --arg libc "$IOS_LIB_LIBC" \
+      --arg localsrc "$ROOT_SRC_DIR" \
       '
       map(.command |= ( .
           + " -isystem \($libcxx)"
@@ -100,74 +116,48 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     ' "$CCDB" > "$tmp" && mv "$tmp" "$CCDB"
 
     # most clangd configurations and editors will look in ./build/, but this just makes it easier to find for some niche edge cases
-    ln -sfn "${buildpath}/compile_commands.json" "$IOS_AARCH64_DIR/compile_commands.json"
+    ln -sfn "$BUILDPATH/compile_commands.json" "$AARCH64_ROOT_DIR/compile_commands.json"
 
     # build example service
+    LOGFILE=$ARCH-servicebuild.log
+    nix log $INCLUDEOS > $LOGFILE
     if [[ -d example ]]; then
       cd example
 
-      LOGFILE=$(pwd)/${arch}-servicebuild.log
-      nix log "${includeos}" > "$LOGFILE"
-
-      [[ -d ${buildpath} ]] && {
+      [[ -d $BUILDPATH ]] && {
         echo "Removing dirty 'example build' directory...";
-        rm -rf "${buildpath}";
+        rm -rf $BUILDPATH;
       }
 
-      [[ ! -d ${buildpath} ]] && {
-        cmake -B ${buildpath} -D ARCH="${arch}" -D CMAKE_BUILD_TYPE=Debug 2>&1 | tee -a "$LOGFILE"
-        (cd ${buildpath} && make -j $NIX_BUILD_CORES  2>&1 | tee -a "$LOGFILE")
+      [[ ! -d $BUILDPATH ]] && {
+        cmake -B $BUILDPATH -D ARCH=$ARCH -D CMAKE_BUILD_TYPE=Debug 2>&1 | tee -a $LOGFILE
+        (cd $BUILDPATH && make -j $NIX_BUILD_CORES  2>&1 | tee -a $LOGFILE)
+
+        if [ $? -ne 0 ]; then
+          exit
+        fi
       }
 
-      # echo -e "\n grep DEBUG $LOGFILE:"
-      # grep DEBUG "$LOGFILE"
-
-      # echo -e "\n grep x86 $LOGFILE:"
-      # grep x86 "$LOGFILE"
-
-      # echo -e "\n nm -C platform/libaarch64_default.a | grep fdt"
-      # nm -C ${includeos}/platform/libaarch64_default.a | grep fdt
-
-      echo -e "\n aarch64 result (nix derivation) ->"
-      echo -e "${includeos}\n"
-
-      echo -e "\n rebuild ->"
-      echo -e "cmake -B ${buildpath} -D ARCH="${arch}" && (cd ${buildpath}; make)"
-
-      echo -e "\n"
-
-      cd $IOS_AARCH64_DIR
+      cd $AARCH64_ROOT_DIR
     fi
 
 
-    # Create dir for booting (aarch64) includeos
+    # Create dir with services/tools for booting (aarch64) includeos
     [[ ! -d boot ]] && {
       mkdir -p boot
     }
 
-    IOS_SERVICE="example/${buildpath}/hello_includeos.elf.bin"
+    SERVICE_RESULT="example/$BUILDPATH/hello_includeos.elf.bin"
 
-    if [[ -e $IOS_SERVICE ]]; then
-      cp -fv $IOS_SERVICE boot/
-      cp -fv ${u-boot}/u-boot.bin boot/
+    U_BOOT=${u-boot}
+
+    if [[ -e $SERVICE_RESULT ]]; then
+      cp -f $SERVICE_RESULT boot/
+      cp -f $U_BOOT/u-boot.bin boot/
     fi
 
-
-    echo "" # booting with qemu :p
-    echo "- - - - ~ in boot/ dir ~ - - - -"
-    echo "boot kernel directly (not recommended, u-boot handles initialization better):"
-    echo -e "qemu-system-aarch64 -machine virt -cpu cortex-a57 -kernel hello_includeos.elf.bin -nographic \n"
-
-    echo "boot u-boot:"
-    echo "objdump -dC hello_includeos.elf.bin | grep \"<_start>\""
-    echo "qemu-system-aarch64 -machine virt -cpu cortex-a57 -bios u-boot.bin -device loader,file=hello_includeos.elf.bin,addr=0x40200000 -nographic"
-    echo "in u-boot bios => go 0x402~>(whatever <_start> is)"
-    echo -e "go 0x40201000 \n"
-
-    echo "make -j $NIX_BUILD_CORES"
-
     # optional zsh
-    if [[ -z "$INSIDE_ZSH" && "${toString useZsh}" ]]; then
+    if [[ -z $INSIDE_ZSH && $USE_ZSH ]]; then
       export INSIDE_ZSH=1
       exec zsh
     fi
