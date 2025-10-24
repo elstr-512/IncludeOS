@@ -129,6 +129,15 @@ SECTIONS
     _RODATA_END_ = .;
   }
 
+  .data :
+  {
+    _DATA_START_ = .;
+    *(.data)
+    *(.data.*)
+    *(.gnu.linkonce.d*)
+    _DATA_END_ = .;
+  }
+
   .tdata ALIGN(0x10) :
   {
     _TDATA_START_ = .;
@@ -168,15 +177,6 @@ SECTIONS
     *(.gcc_except_table)
   }
   _READONLY_END_ = .;
-
-  .data :
-  {
-    _DATA_START_ = .;
-    *(.data)
-    *(.data.*)
-    *(.gnu.linkonce.d*)
-    _DATA_END_ = .;
-  }
 
   .elf_symbols : {
     _ELF_SYM_START_ = .;
