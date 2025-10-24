@@ -55,4 +55,5 @@ reset:
         msr     cpacr_el1, x0                   /* Enable FP/SIMD */
 0:
 
+  bl kernel_aarch64_hello
   b __arch_start
