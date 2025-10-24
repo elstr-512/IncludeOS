@@ -107,9 +107,12 @@ namespace aarch64
     int argc = 1;
 
     // Env vars
-    argv[2] = strdup("LC_CTYPE=C");
-    argv[3] = strdup("LC_ALL=C");
-    argv[4] = strdup("USER=root");
+    /*argv[2] = strdup("LC_CTYPE=C");*/
+    /*argv[3] = strdup("LC_ALL=C");*/
+    /*argv[4] = strdup("USER=root");*/
+    argv[2] = std::pmr::string("LC_CTYPE=C").data();
+    argv[3] = std::pmr::string("LC_ALL=C").data();
+    argv[4] = std::pmr::string("USER=root").data();
     argv[5] = 0x0;
 
     // auxiliary vector
@@ -167,7 +170,8 @@ namespace aarch64
 #endif
 
     // GDB_ENTRY;
-    PRATTLE("* Starting libc initialization\n");
+    PRATTLE("* Starting libc initialization\n"); // +
+    kernel::state().allow_syscalls = true;
     __libc_start_main(kernel_main, argc, argv.data());
   }
 }
