@@ -17,11 +17,12 @@
 
 #include <arch.hpp>
 #include <kernel/memory.hpp>
+#include <info>
 
 __attribute__((weak))
 void __arch_init_paging()
 {
-  /*INFO("aarch64", "Paging not enabled by default on");*/
+  INFO("aarch64", "Paging not enabled by default on");
 }
 
 namespace os {
