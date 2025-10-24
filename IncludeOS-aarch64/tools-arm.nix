@@ -56,52 +56,6 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
   ];
 
   shellHook = ''
-    IOS_SRC=${toString ../.}
-    IOS_AARCH64_DIR=${toString ./.}
-
-    if [ ! -d "$IOS_SRC" ]; then
-        echo "$unikernel is not a valid directory" >&2
-        return 1
-    fi
-
-    echo "Configuring in: ${buildpath}"
-    echo "Source tree: $IOS_SRC"
-
-    # delete old just in case it's dirty
-    [[ -d ${buildpath} ]] && {
-      rm -rf buildpath;
-    }
-
-    # build includeOS
-    cmake -S "$IOS_SRC" -B ${buildpath} \
-      -D CMAKE_EXPORT_COMPILE_COMMANDS=ON \
-      -D ARCH=${arch} \
-      -D CMAKE_MODULE_PATH=${includeos}/cmake
-
-    # procuced by CMake
-    CCDB="${buildpath}/compile_commands.json"
-
-    #
-    # attempting to use -resource-dir with 'clang++ -print-resource-dir'
-    # doesn't work here as we're using -nostdlib/-nostdlibinc
-    #
-    tmp="$CCDB.clangd.tmp"
-    jq \
-      --arg libcxx "${includeos.libraries.libcxx.include}" \
-      --arg libc "${includeos.libraries.libc}"             \
-      --arg localsrc "${toString ./.}"                           \
-      '
-      map(.command |= ( .
-          + " -isystem \($libcxx)"
-          + " -isystem \($libc)/include"
-          | gsub("(?<a>-I)(?<b>/lib/LiveUpdate/include)"; .a + $localsrc + .b)
-      ))
-    ' "$CCDB" > "$tmp" && mv "$tmp" "$CCDB"
-
-    # most clangd configurations and editors will look in ./build/, but this just makes it easier to find for some niche edge cases
-    ln -sfn "${buildpath}/compile_commands.json" "$IOS_AARCH64_DIR/compile_commands.json"
-
-
     echo "" # booting with qemu :p
     echo "- - - - ~ in boot/ dir ~ - - - -"
     echo "boot kernel directly (not recommended, u-boot handles initialization better):"
