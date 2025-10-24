@@ -1,4 +1,5 @@
-boot/
+boot/*
+!boot/Makefile
 build-aarch64/
 *.log
 compile_commands.json
