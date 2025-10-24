@@ -48,6 +48,7 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
      * Tools configured to run on the build platform.
      */
     pkgs.qemu
+    pkgs.dtc
   ];
 
   # compiled for the *target* platform
@@ -114,8 +115,8 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
       }
 
       [[ ! -d ${buildpath} ]] && {
-        cmake -B ${buildpath} -D ARCH="${arch}" 2>&1 | tee -a "$LOGFILE"
-        (cd ${buildpath} && make 2>&1 | tee -a "$LOGFILE")
+        cmake -B ${buildpath} -D ARCH="${arch}" -D CMAKE_BUILD_TYPE=Debug 2>&1 | tee -a "$LOGFILE"
+        (cd ${buildpath} && make -j $NIX_BUILD_CORES  2>&1 | tee -a "$LOGFILE")
       }
 
       # echo -e "\n grep DEBUG $LOGFILE:"
@@ -140,16 +141,15 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
 
 
     # Create dir for booting (aarch64) includeos
-    [[ -d boot ]] && {
-      rm -rf boot;
+    [[ ! -d boot ]] && {
+      mkdir -p boot
     }
-    mkdir -p boot
 
     IOS_SERVICE="example/${buildpath}/hello_includeos.elf.bin"
 
     if [[ -e $IOS_SERVICE ]]; then
-      cp -v $IOS_SERVICE boot/
-      cp -v ${u-boot}/u-boot.bin boot/
+      cp -fv $IOS_SERVICE boot/
+      cp -fv ${u-boot}/u-boot.bin boot/
     fi
 
 
@@ -161,7 +161,10 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     echo "boot u-boot:"
     echo "objdump -dC hello_includeos.elf.bin | grep \"<_start>\""
     echo "qemu-system-aarch64 -machine virt -cpu cortex-a57 -bios u-boot.bin -device loader,file=hello_includeos.elf.bin,addr=0x40200000 -nographic"
-    echo -e "in u-boot bios => go 0x402~>(whatever <_start> is) \n"
+    echo "in u-boot bios => go 0x402~>(whatever <_start> is)"
+    echo -e "go 0x40201000 \n"
+
+    echo "make -j $NIX_BUILD_CORES"
 
     # optional zsh
     if [[ -z "$INSIDE_ZSH" && "${toString useZsh}" ]]; then
