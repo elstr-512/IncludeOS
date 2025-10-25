@@ -1,5 +1,5 @@
-
 #set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf32")
+#set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
 ### aarch64 arch specific ###
 set(ARCH_OBJECTS
@@ -17,14 +17,12 @@ set(ARCH_SOURCES
   timer.cpp
   syscall_entry.cpp
 )
-enable_language(ASM)
 
+enable_language(ASM)
 set_source_files_properties(${ARCH_OBJECTS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
 add_library(arch STATIC ${ARCH_SOURCES} ${ARCH_OBJECTS})
-
 set_target_properties(arch PROPERTIES LINKER_LANGUAGE CXX)
 configure_file(linker.ld ${CMAKE_BINARY_DIR})
-
-install(TARGETS arch DESTINATION ${ARCH}/lib)
-install(FILES linker.ld DESTINATION ${ARCH})
+install(TARGETS arch DESTINATION lib)
+install(FILES linker.ld DESTINATION .)

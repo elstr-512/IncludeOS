@@ -59,7 +59,7 @@ if (DISKBUILDER-NOTFOUND)
 endif()
 
 if ("${ARCH}" STREQUAL "aarch64")
-  set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/aarch64/linker.ld) # TODO: what
+  set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/linker.ld)
 else()
   set(LINK_SCRIPT ${INCLUDEOS_PACKAGE}/linker.ld)
 endif()
@@ -191,7 +191,7 @@ function(os_add_executable TARGET NAME)
     set(LIBRARIES
       ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
       ${INCLUDEOS_PACKAGE}/lib/libos.a
-      ${INCLUDEOS_PACKAGE}/aarch64/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/lib/libarch.a
       ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
       ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
       ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
