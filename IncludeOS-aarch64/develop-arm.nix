@@ -65,10 +65,12 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     fi
     export INSIDE_DEVELOP_SHELL=1
 
+    INCLUDEOS=${includeos}
     SKIP_BUILD=${toString skipBuild}
     USE_ZSH=${toString useZsh}
     if [[ $SKIP_BUILD ]]; then
       # optional zsh
+      echo $INCLUDEOS
       if [[ -z $INSIDE_ZSH && $USE_ZSH ]]; then
         export INSIDE_ZSH=1
         exec zsh
@@ -81,7 +83,6 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     AARCH64_ROOT_DIR=${toString ./.}
     BUILDPATH=${buildpath}
     ARCH=${arch}
-    INCLUDEOS=${includeos}
 
     # delete old just in case it's dirty
     [[ -d $BUILDPATH ]] && {
@@ -131,7 +132,7 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
 
       [[ ! -d $BUILDPATH ]] && {
         cmake -B $BUILDPATH -D ARCH=$ARCH -D CMAKE_BUILD_TYPE=Debug 2>&1 | tee -a $LOGFILE
-        (cd $BUILDPATH && make -j $NIX_BUILD_CORES  2>&1 | tee -a $LOGFILE)
+        (cd $BUILDPATH && make -j 2 2>&1 | tee -a $LOGFILE)
 
         if [ $? -ne 0 ]; then
           exit
