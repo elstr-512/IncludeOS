@@ -23,9 +23,10 @@ ENTRY(_start)
 **/
 SECTIONS
 {
-  PROVIDE ( _ELF_START_ = . + 0x200000 + 0x40000000);
+  PROVIDE ( _ELF_START_ = . + 0x40400000);
   PROVIDE ( _LOAD_START_ = _ELF_START_); /* For convenience w. multiboot */
-  __stack_top = _ELF_START_ -16;
+  __boot_magic = (_ELF_START_ - 0x10);
+  __stack_top = (_ELF_START_ - 0x1000);
 
   . = _ELF_START_ + SIZEOF_HEADERS;
 
@@ -129,15 +130,6 @@ SECTIONS
     _RODATA_END_ = .;
   }
 
-  .data :
-  {
-    _DATA_START_ = .;
-    *(.data)
-    *(.data.*)
-    *(.gnu.linkonce.d*)
-    _DATA_END_ = .;
-  }
-
   .tdata ALIGN(0x10) :
   {
     _TDATA_START_ = .;
@@ -178,6 +170,17 @@ SECTIONS
   }
   _READONLY_END_ = .;
 
+  . = ALIGN(0x1000);
+  .data :
+  {
+    _DATA_START_ = .;
+    *(.data)
+    *(.data.*)
+    *(.gnu.linkonce.d*)
+    _DATA_END_ = .;
+  }
+
+  . = ALIGN(16);
   .elf_symbols : {
     _ELF_SYM_START_ = .;
     LONG (0);
@@ -186,14 +189,14 @@ SECTIONS
   /** Optional memory hole between memdisk and bss **/
   . += PRE_BSS_AREA;
 
-  .bss ALIGN(0x1000) :
+  .bss ALIGN(0x100) :
   {
     _BSS_START_ = .;
     *(.bss .bss.* .gnu.linkonce.b.*)
     *(COMMON)
     _BSS_END_ = .;
   }
-  . = ALIGN(0x8);
+  . = ALIGN(16);
 
   _end = .;
 
