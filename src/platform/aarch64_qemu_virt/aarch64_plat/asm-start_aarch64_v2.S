@@ -17,32 +17,23 @@
 **/
 
 _start:
-    // [Executable code] u32 code0;
-    // [Executable code] u32 code1;
-    nop
-    b reset
+    nop                  /* u32 code0;       Executable code      */
+    b     reset          /* u32 code1;       Executable code      */
+                         /*                  .                    */
+    .quad 0              /* u64 text_offset; Image load offset    */
+                         /*                  .                    */
+    .quad _end - _start  /* u64 image_size;  Effective Image size */
+                         /*                  .                    */
+    .quad 0b1010         /* u64 flags;       kernel flags         */
+                         /*                  .                    */
+    .quad 0              /* u64 res2;        reserved             */
+    .quad 0              /* u64 res3;        reserved             */
+    .quad 0              /* u64 res4;        reserved             */
+                         /*                  .                    */
+    .ascii "ARM\x64"     /* u32 magic;       "ARM\x64"            */
+                         /*                  .                    */
+    .byte 0, 0, 0, 0     /* u32 res5;        reserved             */
 
-    // [Image load offset, little endian] u64 text_offset;
-    .quad 0
-
-    // [Effective Image size, little endian] u64 image_size;
-    .quad _end - _start
-
-    // [kernel flags, little endian] u64 flags;
-    .quad 0b1010
-
-    // [reserved] u64 res2 = 0;
-    // [reserved] u64 res3 = 0;
-    // [reserved] u64 res4 = 0;
-    .quad 0
-    .quad 0
-    .quad 0
-
-    // [Magic number, little endian, "ARM\x64"] u32 magic = 0x644d5241;
-    .ascii "ARM\x64"
-
-    // [reserved (used for PE COFF offset)] u32 res5;
-    .byte 0, 0, 0, 0
 
 reset:
     // --- Enable FP/SIMD (NEON) for EL0/EL1
