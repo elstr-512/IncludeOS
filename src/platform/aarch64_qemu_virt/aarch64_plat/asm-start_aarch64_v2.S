@@ -36,6 +36,9 @@ _start:
 
 
 reset:
+    // save x0
+    mov     x9, x0
+
     // --- Enable FP/SIMD (NEON) for EL0/EL1
     mrs     x0, CPACR_EL1               // read CPACR_EL1
     orr     x0, x0, #(0x3 << 20)        // set FPEN[21:20] = 0b11 (full access)
@@ -48,8 +51,15 @@ reset:
     isb
 
     // --- usual boot (stack, jump to kernel)
+
     ldr     x8, =__stack_top
     mov     sp, x8
+
+    // restore x0
+    mov     x0, x9
+
+    bl      info_kernel_main
+
     bl      kernel_start
 
 loop:
