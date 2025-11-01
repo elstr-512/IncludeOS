@@ -161,7 +161,8 @@ extern "C"
 //__attribute__((no_sanitize("all")))
 void kernel_start(uintptr_t magic, uintptr_t addrin)
 {
-  kprintf("LOG: %s:%d \n", __FILE__, __LINE__);
+  __serial_print1("Hello kernel_start! :P \n");
+
   kprintf("Magic %zx addrin %zx\n",magic,addrin);
 
   __init_sanity_checks();

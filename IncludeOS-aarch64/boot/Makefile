@@ -18,7 +18,10 @@ kernel:
 
 uboot:
 	@echo -e "[RUN] Launching QEMU (w. uboot as bios)\n"
-	@objdump -d hello_includeos.elf.bin | head | tail -n 5
+	@echo -e "[GUIDE] Wait until uboot SHELL opens, then"
+	@echo -e "[GUIDE] use the 'go' cmd to start application"
+	@echo -e "[GUIDE] found at address of the <_start> label \n"
+	objdump -d hello_includeos.elf.bin | head | tail -n 5
 	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
 		-bios u-boot.bin -kernel $(TARGET) \
 		-d int,mmu -D qemu.log
