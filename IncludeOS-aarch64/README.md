@@ -1,5 +1,9 @@
 # AARCH64
 
+- The current target is: `QEMU Arm System emulator - ‘virt’ generic virtual platform`
+- Source files are in dir: `src/platform/aarch64_qemu_virt`
+
+
 ## boot example service
 build example service and enter develop-shell:
 ```sh
