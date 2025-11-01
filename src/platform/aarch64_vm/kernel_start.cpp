@@ -161,7 +161,6 @@ extern "C"
 //__attribute__((no_sanitize("all")))
 void kernel_start(uintptr_t magic, uintptr_t addrin)
 {
-  kprintf("LOG: %s:%d \n", __FILE__, __LINE__);
   kprintf("Magic %zx addrin %zx\n",magic,addrin);
 
   __init_sanity_checks();
@@ -173,7 +172,7 @@ void kernel_start(uintptr_t magic, uintptr_t addrin)
   int proplen;
 
   //TODO find this somewhere ?.. although it is at memory 0x00
-  uint64_t fdt_addr=0x40000000; // HACK: this is HARDCODED for qemu-system-aarch64 atm
+  uint64_t fdt_addr=0x40000000;
   char *fdt=(char*)fdt_addr;
 
 
@@ -218,9 +217,6 @@ void kernel_start(uintptr_t magic, uintptr_t addrin)
   			((size_cells - j - 1) * 32);
   	}
 	}
-
-  // HACK: device tree is not parsed properly >:/ just adding the mem to size
-  size += 0x8000000;
 
   print_le_named64("RAM BASE :",(char *)&addr);
   print_le_named64("RAM SIZE :",(char *)&size);

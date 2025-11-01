@@ -38,7 +38,7 @@ int kernel_main(int, char * *, char * *)
   LL_ASSERT(global_ctors_ok == 42);
   kernel::state().libc_initialized = true;
 
-  Elf_binary<Elf64> elf{{(char*)&_ELF_START_, static_cast<size_t>(&_ELF_END_ - &_ELF_START_)}};
+  Elf_binary<Elf64> elf{{(char*)&_ELF_START_, &_ELF_END_ - &_ELF_START_}};
   LL_ASSERT(elf.is_ELF() && "ELF header intact");
 
   PRATTLE("<kernel_main> OS start \n");
@@ -85,7 +85,7 @@ namespace aarch64
     auto* ehdr = (Elf64_Ehdr*)&_ELF_START_;
     auto* phdr = (Elf64_Phdr*)((char*)ehdr + ehdr->e_phoff);
     LL_ASSERT(phdr);
-    Elf_binary<Elf64> elf{{(char*)&_ELF_START_, static_cast<size_t>(&_ELF_END_ - &_ELF_START_)}};
+    Elf_binary<Elf64> elf{{(char*)&_ELF_START_, &_ELF_END_ - &_ELF_START_}};
     LL_ASSERT(elf.is_ELF());
     LL_ASSERT(phdr[0].p_type == PT_LOAD);
 
@@ -107,12 +107,9 @@ namespace aarch64
     int argc = 1;
 
     // Env vars
-    /*argv[2] = strdup("LC_CTYPE=C");*/
-    /*argv[3] = strdup("LC_ALL=C");*/
-    /*argv[4] = strdup("USER=root");*/
-    argv[2] = std::pmr::string("LC_CTYPE=C").data();
-    argv[3] = std::pmr::string("LC_ALL=C").data();
-    argv[4] = std::pmr::string("USER=root").data();
+    argv[2] = strdup("LC_CTYPE=C");
+    argv[3] = strdup("LC_ALL=C");
+    argv[4] = strdup("USER=root");
     argv[5] = 0x0;
 
     // auxiliary vector
@@ -170,8 +167,7 @@ namespace aarch64
 #endif
 
     // GDB_ENTRY;
-    PRATTLE("* Starting libc initialization\n"); // +
-    kernel::state().allow_syscalls = true;
+    PRATTLE("* Starting libc initialization\n");
     __libc_start_main(kernel_main, argc, argv.data());
   }
 }

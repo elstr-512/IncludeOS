@@ -1,12 +1,11 @@
-#[[ --- NOTE: moved and cleaned up this to 'src/platform/aarch_qemu_virt/'
+
 set(LIB_NAME aarch64_${PLATFORM})
 
 set(PLATFORM_OBJECTS
 
 
 #  start.asm
-#  start_aarch64.asm
-  start_aarch64_v2.asm
+  start_aarch64.asm
   stop.asm
 )
 
@@ -43,5 +42,3 @@ set_target_properties(${LIB_NAME}
 )
 
 install(TARGETS ${LIB_NAME} DESTINATION platform)
-
-# --- ]]
