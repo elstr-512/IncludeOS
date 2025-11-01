@@ -161,7 +161,7 @@ extern "C"
 //__attribute__((no_sanitize("all")))
 void kernel_start(uintptr_t magic, uintptr_t addrin)
 {
-  __serial_print1("Hello kernel_start! :P \n");
+  __serial_print1("\no-+-> kernel_start enter <-+-o \n");
 
   kprintf("Magic %zx addrin %zx\n",magic,addrin);
 
@@ -256,4 +256,5 @@ void kernel_start(uintptr_t magic, uintptr_t addrin)
 
   aarch64::init_libc((uintptr_t)fdt_addr);
 
+  __serial_print1("\nx-+-> kernel_start exit <-+-x \n");
 }
