@@ -17,7 +17,6 @@
 
 #include <arch.hpp>
 #include <kernel/memory.hpp>
-#include <info>
 
 __attribute__((weak))
 void __arch_init_paging()

@@ -39,6 +39,10 @@ __arch_start:
     mrs x0, s3_1_c15_c3_0
   //  ;; Create stack frame for backtrace
 
+    ldr x30, =__stack_top
+    mov sp, x30
+
+
   /*  ldr w0,[x9]
     ldr w1,[x9,#0x8]
 */
