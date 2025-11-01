@@ -14,7 +14,6 @@ kernel:
 	@echo -e "[RUN] Launching QEMU with '-kernel flag'\n"
 	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
 		-kernel $(TARGET) \
-		-d int,mmu -D qemu.log
 
 uboot:
 	@echo -e "[RUN] Launching QEMU (w. uboot as bios)\n"
@@ -24,7 +23,6 @@ uboot:
 	objdump -d hello_includeos.elf.bin | head | tail -n 5
 	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
 		-bios u-boot.bin -kernel $(TARGET) \
-		-d int,mmu -D qemu.log
 
 debug:
 	@echo -e "[DGB] Launching QEMU with '-kernel flag' AND waiting for debugger\n"
