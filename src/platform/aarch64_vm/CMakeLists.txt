@@ -1,4 +1,4 @@
-
+#[[ --- NOTE: moved and cleaned up this to 'src/platform/aarch_qemu_virt/'
 set(LIB_NAME aarch64_${PLATFORM})
 
 set(PLATFORM_OBJECTS
@@ -43,3 +43,5 @@ set_target_properties(${LIB_NAME}
 )
 
 install(TARGETS ${LIB_NAME} DESTINATION platform)
+
+# --- ]]

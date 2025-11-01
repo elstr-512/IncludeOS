@@ -1,5 +1,6 @@
+#[[ --- NOTE: moved and cleaned up this to 'src/platform/aarch_qemu_virt/'
+
 #set(CMAKE_ASM_NASM_OBJECT_FORMAT "elf32")
-#set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
 ### aarch64 arch specific ###
 set(ARCH_OBJECTS
@@ -26,3 +27,5 @@ set_target_properties(arch PROPERTIES LINKER_LANGUAGE CXX)
 configure_file(linker.ld ${CMAKE_BINARY_DIR})
 install(TARGETS arch DESTINATION lib)
 install(FILES linker.ld DESTINATION .)
+
+# --- ]]
