@@ -22,5 +22,5 @@ indent_size = 4
 [boot]
 indent_size = 4
 
-[*.asm]
+[*.{asm,s,S}]
 indent_size = 4
