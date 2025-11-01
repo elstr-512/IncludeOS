@@ -3,7 +3,7 @@
 #include "gic.h"
 
 extern "C" {
-  #include <libfdt.h>
+#include <libfdt.h>
 }
 
 #include "gic_regs.h"
@@ -12,11 +12,11 @@ extern "C" {
 //#define GIC_TRACE 0
 
 #if defined(GIC_TRACE)
-  #define GIC_PRINT(type, fmt, ...) \
-    kprintf("GIC %s : ",type);\
-    kprintf(fmt, ##__VA_ARGS__);
+#define GIC_PRINT(type, fmt, ...) \
+kprintf("GIC %s : ",type);\
+kprintf(fmt, ##__VA_ARGS__);
 #else
-  #define GIC_PRINT(type, fmt, ...) do {} while(0);
+#define GIC_PRINT(type, fmt, ...) do {} while(0);
 #endif
 
 #define GIC_INFO(fmt, ...) GIC_PRINT("INFO",fmt, ##__VA_ARGS__)
@@ -28,25 +28,25 @@ extern "C" {
 int fdt_interrupt_cells(const void *fdt,int nodeoffset)
 {
   const struct fdt_property *prop;
-	int val;
-	int len;
+  int val;
+  int len;
   const char *name="#interrupt-cells";
-	prop = fdt_get_property(fdt, nodeoffset,name, &len);
-	if (!prop)
-		return len;
-    //hmm
+  prop = fdt_get_property(fdt, nodeoffset,name, &len);
+  if (!prop)
+    return len;
+  //hmm
 
-	if (len != (sizeof(int)))
-		return -FDT_ERR_BADNCELLS;
+  if (len != (sizeof(int)))
+    return -FDT_ERR_BADNCELLS;
 
   val=fdt32_ld((const fdt32_t *)((char *)prop->data));
 
   if (val == -FDT_ERR_NOTFOUND)
     return 1;
 
-	if ((val <= 0) || (val > FDT_MAX_NCELLS))
-		return -FDT_ERR_BADNCELLS;
-	return val;
+  if ((val <= 0) || (val > FDT_MAX_NCELLS))
+    return -FDT_ERR_BADNCELLS;
+  return val;
 }
 
 
@@ -56,7 +56,7 @@ uint64_t fdt_load_addr(const struct fdt_property *prop,int *offset,int addr_cell
   for (int j = 0; j < addr_cells; ++j) {
     addr |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + *offset)) <<
       ((addr_cells - j - 1) * 32);
-      *offset+=sizeof(uint32_t);
+    *offset+=sizeof(uint32_t);
   }
   return addr;
 }
@@ -68,7 +68,7 @@ uint64_t fdt_load_size(const struct fdt_property *prop,int *offset,int size_cell
   for (int j = 0; j < size_cells; ++j) {
     size |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + *offset)) <<
       ((size_cells - j - 1) * 32);
-      *offset+=sizeof(uint32_t);
+    *offset+=sizeof(uint32_t);
   }
   return size;
 }
@@ -304,19 +304,19 @@ int gicd_decode_irq()
 //TODO fix i really really do not like this
 void __arch_subscribe_irq(uint8_t irq)
 {
-    printf("subscribe irq %d\n",irq);
-//  assert(irq < IRQ_LINES);
-//  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, modern_interrupt_handler);
+  printf("subscribe irq %d\n",irq);
+  //  assert(irq < IRQ_LINES);
+  //  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, modern_interrupt_handler);
 }
 void __arch_install_irq(uint8_t irq, uintptr_t handler)
 {
   printf("install irq %d\n",irq);
-//  assert(irq < IRQ_LINES);
-//  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, handler);
+  //  assert(irq < IRQ_LINES);
+  //  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, handler);
 }
 void __arch_unsubscribe_irq(uint8_t irq)
 {
-    printf("unsubscribe irq %d\n",irq);
-//  assert(irq < IRQ_LINES);
-//  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, unused_interrupt_handler);
+  printf("unsubscribe irq %d\n",irq);
+  //  assert(irq < IRQ_LINES);
+  //  PER_CPU(x86::idt).set_handler(IRQ_BASE + irq, unused_interrupt_handler);
 }

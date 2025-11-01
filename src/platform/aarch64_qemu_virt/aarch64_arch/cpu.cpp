@@ -32,11 +32,11 @@ char *get_tpidr()
   switch(el)
   {
     case 0:
-     __asm__ __volatile__ ("mrs %0,tpidr_el0" : "=r"(self));
-     return self;
+      __asm__ __volatile__ ("mrs %0,tpidr_el0" : "=r"(self));
+      return self;
     case 1:
-     __asm__ __volatile__ ("mrs %0,tpidr_el1" : "=r"(self));
-     return self;
+      __asm__ __volatile__ ("mrs %0,tpidr_el1" : "=r"(self));
+      return self;
   }
   return nullptr;
 }
@@ -47,11 +47,11 @@ void set_tpidr(void *self)
   switch(el)
   {
     case 0:
-     __asm__ __volatile__ ("msr tpidr_el0,%0" : :"r"(self));
-     break;
+      __asm__ __volatile__ ("msr tpidr_el0,%0" : :"r"(self));
+      break;
     case 1:
-     __asm__ __volatile__ ("msr tpidr_el1,%0" : :"r"(self));
-     break;
+      __asm__ __volatile__ ("msr tpidr_el1,%0" : :"r"(self));
+      break;
   }
 }
 

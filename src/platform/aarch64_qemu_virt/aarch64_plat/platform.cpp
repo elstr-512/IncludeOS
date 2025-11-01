@@ -11,7 +11,7 @@
 #include <smp>
 
 extern "C" {
-  #include <libfdt.h>
+#include <libfdt.h>
 }
 
 #include <cpu.h>
@@ -65,7 +65,7 @@ void __platform_init(uint64_t fdt_addr)
   };
   static SMP::Array<timer_data> timerdata;
 
-  #define TIMER_IRQ 27
+#define TIMER_IRQ 27
 
   //frequency is in ticks per second
   static uint32_t ticks_per_micro = timer_get_frequency()/1000000;
@@ -73,18 +73,18 @@ void __platform_init(uint64_t fdt_addr)
   Timers::init(
     [](Timers::duration_t nanos){
 
-        //there is a better way to do this!!
-        // prevent overflow
-        uint64_t ticks = (nanos.count() / 1000)* ticks_per_micro;
-        if (ticks > 0xFFFFFFFF)
-            ticks = 0xFFFFFFFF;
+      //there is a better way to do this!!
+      // prevent overflow
+      uint64_t ticks = (nanos.count() / 1000)* ticks_per_micro;
+      if (ticks > 0xFFFFFFFF)
+        ticks = 0xFFFFFFFF;
         // prevent oneshots less than a microsecond
         // NOTE: when ticks == 0, the entire timer system stops
-        else if (UNLIKELY(ticks < ticks_per_micro))
-            ticks = ticks_per_micro;
+      else if (UNLIKELY(ticks < ticks_per_micro))
+        ticks = ticks_per_micro;
 
-        timer_set_virtual_compare(timer_get_virtual_countval()+ticks);
-        timer_virtual_start();
+      timer_set_virtual_compare(timer_get_virtual_countval()+ticks);
+      timer_virtual_start();
     },
     [](){
       timer_virtual_stop();
@@ -123,7 +123,7 @@ void __arch_poweroff()
   kprint("ARCH poweroff\n");
   vm_exit();
   //TODO check that this is sane on ARM
-//  while (1) asm("hlt #0xf000;");
+  //  while (1) asm("hlt #0xf000;");
   __builtin_unreachable();
 }
 

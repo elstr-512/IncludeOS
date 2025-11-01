@@ -10,7 +10,7 @@ vm_exit:
     str x0, [sp,#8]
 
     /* x1 contains the address of parameter block.
-     * Any memory address could be used. */
+    * Any memory address could be used. */
     mov x1, sp
 
     /* SYS_EXIT */

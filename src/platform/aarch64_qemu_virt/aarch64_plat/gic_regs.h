@@ -1,3 +1,4 @@
+#include <cstdint>
 #if !defined(GIC_REGS)
 #define GIC_REGS
 

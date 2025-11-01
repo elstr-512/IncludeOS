@@ -142,14 +142,14 @@ void exception_handler_syn_el(struct stack_frame *ctx, uint64_t esr)
 
 void exception_handler_fiq_el(struct stack_frame *ctx,uint64_t esr)
 {
-//  kprintf("FIQ EXCEPTION el=%08x\r\n",cpu_get_current_el());
+  //  kprintf("FIQ EXCEPTION el=%08x\r\n",cpu_get_current_el());
   kprintf("FIQ EXCEPTION\r\n");
 }
 
 void exception_handler_serror_el(struct stack_frame *ctx,uint64_t esr)
 {
-//  kprintf("SERROR EXCEPTION el=%08x\r\n",cpu_get_current_el());
-  //kprint("SYN EXCEPTION\r\n");
+  //  kprintf("SERROR EXCEPTION el=%08x\r\n",cpu_get_current_el());
+  //  kprint("SYN EXCEPTION\r\n");
   kprintf("SERROR EXCEPTION\r\n");
 }
 

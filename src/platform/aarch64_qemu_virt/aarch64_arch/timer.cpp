@@ -71,7 +71,7 @@ uint32_t timer_get_count()
 }
 void timer_set_control(uint32_t control)
 {
-    asm volatile("msr cntp_ctl_el0, %0" :: "r"(control): "memory");
+  asm volatile("msr cntp_ctl_el0, %0" :: "r"(control): "memory");
 }
 uint32_t timer_get_control()
 {
@@ -81,8 +81,8 @@ uint32_t timer_get_control()
 }
 void timer_stop()
 {
-//  uint32_t ctl=timer_get_control();
-//  ctl &=~(0x1);
+  //  uint32_t ctl=timer_get_control();
+  //  ctl &=~(0x1);
   timer_set_control(0x0);
 }
 void timer_start()

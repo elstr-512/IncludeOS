@@ -117,7 +117,7 @@ void print_be(const char *mem,int size)
 #include <kernel/service.hpp>
 //#include <boot/multiboot.h>
 extern "C" {
-  #include <libfdt.h>
+#include <libfdt.h>
 }
 
 #include "init_libc.hpp"
@@ -131,13 +131,13 @@ extern "C" {/*
   void _init_heap(uintptr_t);
   void __init_crash_contexts();
 */
-  void __init_sanity_checks();
-  void kernel_sanity_checks();
-  void _init_bss();
-  uintptr_t _move_symbols(uintptr_t loc);
-  void _init_elf_parser();
-  void __init_crash_contexts();
-  void __elf_validate_section(const void*);
+void __init_sanity_checks();
+void kernel_sanity_checks();
+void _init_bss();
+uintptr_t _move_symbols(uintptr_t loc);
+void _init_elf_parser();
+void __init_crash_contexts();
+void __elf_validate_section(const void*);
 }
 
 
@@ -204,20 +204,20 @@ void kernel_start(uintptr_t magic, uintptr_t addrin)
 
   for (int i = 0; i < proplen / cellslen; ++i) {
 
-  	for (int j = 0; j < addr_cells; ++j) {
-  		int offset = (cellslen * i) + (sizeof(uint32_t) * j);
+    for (int j = 0; j < addr_cells; ++j) {
+      int offset = (cellslen * i) + (sizeof(uint32_t) * j);
 
-  		addr |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + offset)) <<
-  			((addr_cells - j - 1) * 32);
-  	}
-  	for (int j = 0; j < size_cells; ++j) {
-  		int offset = (cellslen * i) +
-  			(sizeof(uint32_t) * (j + addr_cells));
+      addr |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + offset)) <<
+        ((addr_cells - j - 1) * 32);
+    }
+    for (int j = 0; j < size_cells; ++j) {
+      int offset = (cellslen * i) +
+        (sizeof(uint32_t) * (j + addr_cells));
 
-  		size |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + offset)) <<
-  			((size_cells - j - 1) * 32);
-  	}
-	}
+      size |= (uint64_t)fdt32_ld((const fdt32_t *)((char *)prop->data + offset)) <<
+        ((size_cells - j - 1) * 32);
+    }
+  }
 
   // HACK: device tree is not parsed properly >:/ just adding the mem to size
   size += 0x8000000;
@@ -230,7 +230,7 @@ void kernel_start(uintptr_t magic, uintptr_t addrin)
   extern char _end;
   uintptr_t free_mem_begin = reinterpret_cast<uintptr_t>(&_end);
 
-    //ok now its sane
+  //ok now its sane
   free_mem_begin += _move_symbols(free_mem_begin);
 
   // Initialize .bss

@@ -26,13 +26,13 @@ void __arch_init_paging()
 }
 
 namespace os {
-namespace mem {
-  __attribute__((weak))
-  Map map(Map m, const char* name) {
-    return {};
-  }
+  namespace mem {
+    __attribute__((weak))
+    Map map(Map m, const char* name) {
+      return {};
+    }
 
-  template <>
-  const size_t Mapping<os::mem::Access>::any_size = 4096;
-}
+   template <>
+   const size_t Mapping<os::mem::Access>::any_size = 4096;
+  }
 }

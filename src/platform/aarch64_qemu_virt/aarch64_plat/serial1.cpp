@@ -33,7 +33,7 @@ void __serial_print1(const char* cstr)
   while (*cstr) {
     //No check what so ever probably not ok
     *((volatile unsigned int *) UART_BASE) = *cstr++;
-  /*  while (not (hw::inb(port + 5) & 0x20));
+    /*  while (not (hw::inb(port + 5) & 0x20));
     hw::outb(port, *cstr++);*/
   }
 }

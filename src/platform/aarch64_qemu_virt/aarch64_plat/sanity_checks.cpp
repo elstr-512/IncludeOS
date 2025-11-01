@@ -16,7 +16,6 @@
 // limitations under the License.
 
 #include <cassert>
-#include <cstdint>
 #include <kprint>
 #include <util/crc32.hpp>
 #include <kernel/elf.hpp>

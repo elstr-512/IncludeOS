@@ -53,8 +53,8 @@ void os::halt() noexcept{
   asm volatile("wfi" :::"memory");
   //asm volatile("hlt #0xf000");
   asm volatile(
-  ".global _irq_cb_return_location;\n"
-  "_irq_cb_return_location:" );
+    ".global _irq_cb_return_location;\n"
+    "_irq_cb_return_location:" );
 
   // Count sleep cycles
   PER_CPU(os_per_cpu).cycles_hlt += os::Arch::cpu_cycles() - cycles_before;
