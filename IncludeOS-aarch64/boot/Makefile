@@ -33,3 +33,8 @@ debug:
 gdb-attatch:
 	@echo -e "[DGB] attaching gdb to qemu instance\n"
 	gdb $(TARGET) -ex "target extended-remote :1234" -ex "break _start"
+
+image-boot: $(TARGET)
+	@objcopy -O binary $(TARGET) includeos.img
+	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
+		-bios u-boot.bin -kernel includeos.img \
