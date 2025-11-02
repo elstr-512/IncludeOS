@@ -8,7 +8,7 @@ extern "C" {
 // Arguments for aarch64, dtb_addr32 = x0
 void info_FP_SIMD(void) {
 
-  uart_puts("\no-+-> info_FP_SIMD enter <-+-o \n");
+  uart_puts_enter("info_FP_SIMD ");
 
   uart_printf("\n--- Testing floats ---\n");
   double fa = 12.4321;
@@ -39,8 +39,7 @@ void info_FP_SIMD(void) {
     uart_printf("SIMD OK! \n");
   }
 
-  uart_puts("\nx-+-> info_FP_SIMD exit <-+-x \n");
-  uart_puts("\n");
+  uart_puts_exit("info_FP_SIMD ");
 }
 
 } /* extern "C" */

@@ -31,7 +31,7 @@ static void print_boot_state(void) {
 // Arguments for aarch64, dtb_addr32 = x0
 void info_kernel_main(uint64_t dtb_addr32, uint64_t x1, uint64_t x2, uint64_t x3) {
 
-  uart_puts("\no-+-> info_kernel_main enter <-+-o \n");
+  uart_puts_enter("info_kernel_main");
 
   print_boot_state();
 
@@ -84,8 +84,7 @@ void info_kernel_main(uint64_t dtb_addr32, uint64_t x1, uint64_t x2, uint64_t x3
   }
   uart_puts("\n");
 
-  uart_puts("\nx-+-> info_kernel_main exit <-+-x \n");
-  uart_puts("\n");
+  uart_puts_exit("info_kernel_main");
 }
 
 } /* extern "C" */

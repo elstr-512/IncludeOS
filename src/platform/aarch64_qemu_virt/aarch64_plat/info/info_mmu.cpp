@@ -44,7 +44,7 @@ static inline unsigned long read_elr_el1(void) {
 }
 
 void info_mmu() {
-  uart_printf("\no-+-> info_mmu enter <-+-o \n");
+  uart_puts_enter("info_mmu");
 
   uart_printf("SCTLR_EL1 = %lx\n", read_sctlr_el1());
   uart_printf("TTBR0_EL1 = %lx\n", read_ttbr0_el1());
@@ -55,7 +55,7 @@ void info_mmu() {
   uart_printf("FAR_EL1  =  %lx\n", read_far_el1());
   uart_printf("ELR_EL1  =  %lx\n", read_elr_el1());
 
-  uart_printf("\nx-+-> info_mmu exit <-+-x \n");
+  uart_puts_exit("info_mmu");
 }
 
 } /* extern "C" */
