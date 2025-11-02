@@ -19,6 +19,10 @@ void uart_puts(const char* s) {
   while (*s) uart_putc(*s++);
 }
 
+void uart_flush(void) {
+    while (UART0_FR & (1 << 3)) ;  // Bit 3 = BUSY
+}
+
 static void uart_puthex(uint64_t x) {
   static const char* hex = "0123456789abcdef";
   uart_puts("0x");
