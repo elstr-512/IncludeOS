@@ -15,6 +15,7 @@ SET(PLATFORM_SOURCES
   sanity_checks.cpp
   serial1.cpp
 
+  info/info_FP_SIMD.cpp
   info/info_mmu.cpp
   info/info_start.cpp
   info/info_uart_print.cpp

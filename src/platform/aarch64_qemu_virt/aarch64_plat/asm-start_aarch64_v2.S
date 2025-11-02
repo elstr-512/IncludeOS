@@ -41,7 +41,7 @@ reset:
 
     // --- Enable FP/SIMD (NEON) for EL0/EL1
     mrs     x0, CPACR_EL1               // read CPACR_EL1
-    orr     x0, xZR, #(0x3 << 20)        // set FPEN[21:20] = 0b11 (full access)
+    orr     x0, x0, #(0x3 << 20)        // set FPEN[21:20] = 0b11 (full access)
     msr     CPACR_EL1, x0               // write back
     isb                                 // MUST follow write to CPACR_EL1
 
@@ -58,6 +58,7 @@ reset:
     // --- detour into debug functions
     bl      info_kernel_main
     bl      info_mmu
+    bl      info_FP_SIMD
 
     // --- jump to kernel
     bl      kernel_start
