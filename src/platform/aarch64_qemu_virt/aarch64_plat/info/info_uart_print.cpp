@@ -116,4 +116,11 @@ void uart_printf(const char* fmt, ...) {
   va_end(args);
 }
 
+void uart_puts_enter(const char* s) {
+  uart_printf("\no-+-> [ENTER] %s <-+-o\n", s);
+}
+void uart_puts_exit(const char* s) {
+  uart_printf("\nx-+-> [EXIT] %s <-+-x\n", s);
+}
+
 } /* extern "C" */
