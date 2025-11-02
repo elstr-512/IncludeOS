@@ -13,8 +13,15 @@ if (${ARCH} STREQUAL "aarch64")
   option(SMP "Compile with SMP (multiprocessing)" ON)
 
   # NOTE: WHAT!?: setting build type to 'Debug' makes 'init_libc' work!?
-  # ... but the kernel becomes dependent on u-boot. No output without it!?
+  #       but the kernel becomes dependent on u-boot. No output without it!?
+  #
+  # NOTE: perhaps an optimization difference!
+  #
+  # WARN: never mind, don't use 'Debug', it messes up the build cache or
+  #       something ... ?
+
   # set(CMAKE_BUILD_TYPE "Debug")
+
 else()
   option(SMP "Compile with SMP (multiprocessing)" ON)
 endif()
