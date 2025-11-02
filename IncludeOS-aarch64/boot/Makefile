@@ -8,7 +8,7 @@ dump-dtb:
 
 nix-repl:
 	@echo -e "[NIX] Opening nix repl \n"
-	@nix repl -f '<nixpkgs>' -I nixpkgs=channel:nixos-23.11
+	@nix repl -f '<nixpkgs>' -I nixpkgs=channel:nixos-25.05
 
 kernel:
 	@echo -e "[RUN] Launching QEMU with '-kernel flag'\n"
