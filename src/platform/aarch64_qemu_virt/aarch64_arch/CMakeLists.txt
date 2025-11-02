@@ -1,5 +1,5 @@
 SET(ARCH_OBJECTS
-  exceptions.asm
+  # exceptions.asm
 )
 
 SET(ARCH_SOURCES

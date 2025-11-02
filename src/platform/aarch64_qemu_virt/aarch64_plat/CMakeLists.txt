@@ -3,6 +3,8 @@ SET(LIB_NAME aarch64_${PLATFORM})
 SET(PLATFORM_OBJECTS
   asm-start_aarch64_v2.S
   asm-stop.S
+
+  exceptions/asm-exceptions.S
 )
 
 SET(PLATFORM_SOURCES
@@ -14,6 +16,8 @@ SET(PLATFORM_SOURCES
   platform.cpp
   sanity_checks.cpp
   serial1.cpp
+
+  exceptions/traps.cpp
 
   info/info_FP_SIMD.cpp
   info/info_mmu.cpp

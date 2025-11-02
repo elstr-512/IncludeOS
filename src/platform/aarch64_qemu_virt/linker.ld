@@ -47,6 +47,7 @@ SECTIONS
   {
     PROVIDE(_TEXT_START_ = .);
     *(.text.boot)
+    *(.text.exceptions)
     *(.text)
     *(.text.*)
     *(.gnu.linkonce.t*)

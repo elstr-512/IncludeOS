@@ -1,4 +1,4 @@
-#include <macros.h>
+/* asm-start_aarch64_v2.S */
 
 .section .text.boot
 .global _start
@@ -8,8 +8,8 @@
 .extern _end
 .extern __stack_top
 .extern __boot_magic
-.extern exception_vector
 .extern kernel_start
+.extern exception_vector
 
 /*
  * NOTE: _start is the Linux image header
@@ -50,6 +50,16 @@ reset:
     msr     FPSR, xZR
     isb
 
+    // --- Install exception vector ---
+    adr     x0, exception_vector        // address of vector table
+    msr     VBAR_EL1, x0                // install into VBAR_EL1
+    isb                                 // synchronize context
+
+    // TODO: do this somewhere else later
+    //       enable IRQs (to receive timer/uart IRQs later)
+    msr DAIFClr, #2
+    isb
+
     // --- usual boot (stack, jump to kernel, etc.)
     ldr     x8, =__stack_top
     mov     sp, x8
@@ -66,3 +76,4 @@ reset:
 loop:
     wfe
     b loop
+
