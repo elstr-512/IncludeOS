@@ -14,6 +14,8 @@ SET(PLATFORM_SOURCES
   platform.cpp
   sanity_checks.cpp
   serial1.cpp
+
+  info/info_mmu.cpp
   info/info_start.cpp
   info/info_uart_print.cpp
 )

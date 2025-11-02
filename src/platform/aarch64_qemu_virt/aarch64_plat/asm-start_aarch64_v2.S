@@ -36,7 +36,7 @@ _start:
 
 
 reset:
-    // save x0
+    // --- save x0
     mov     x9, x0
 
     // --- Enable FP/SIMD (NEON) for EL0/EL1
@@ -50,16 +50,16 @@ reset:
     msr     FPSR, xZR
     isb
 
-    // --- usual boot (stack, jump to kernel)
-
+    // --- usual boot (stack, jump to kernel, etc.)
     ldr     x8, =__stack_top
     mov     sp, x8
-
-    // restore x0
     mov     x0, x9
 
+    // --- detour into debug functions
     bl      info_kernel_main
+    bl      info_mmu
 
+    // --- jump to kernel
     bl      kernel_start
 
 loop:
