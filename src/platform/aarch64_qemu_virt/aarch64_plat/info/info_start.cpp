@@ -1,25 +1,12 @@
+#include "info_uart_print.hpp"
+
 #include <cstdint>
 
 extern "C" {
   #include <libfdt.h>
 }
 
-
 extern "C" {
-
-// NOTE: UART base on QEMU virt
-#define UART0_BASE 0x09000000UL
-#define UART0_DR   (*(volatile uint32_t *)(UART0_BASE + 0x00))
-#define UART0_FR   (*(volatile uint32_t *)(UART0_BASE + 0x18))
-
-static void uart_putc(char c) {
-  while (UART0_FR & (1 << 5)) ;
-  UART0_DR = c;
-}
-
-static void uart_puts(const char *s) {
-  while (*s) uart_putc(*s++);
-}
 
 static uint64_t read_current_el(void) {
   uint64_t el;

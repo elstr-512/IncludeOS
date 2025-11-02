@@ -15,6 +15,7 @@ SET(PLATFORM_SOURCES
   sanity_checks.cpp
   serial1.cpp
   info/info_start.cpp
+  info/info_uart_print.cpp
 )
 
 INCLUDE_DIRECTORIES(../aarch64_arch)
