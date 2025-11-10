@@ -1,12 +1,27 @@
-{ withCcache ? false, # Enable ccache. Requires correct permissions, see overlay.nix.
-  smp ? false, # Enable multcore support (SMP)
-  nixpkgs ? ./pinned.nix,
-  overlays ? [
-    (import ./overlay.nix { inherit withCcache; inherit smp; } )
-  ],
-  pkgs ? import nixpkgs { config = {}; inherit overlays; }
+{
+  nixpkgs ? ./pinned.nix
+
+  # Enable ccache support. See overlay.nix for details.
+, withCcache ? false
+
+  # Enable multicore suport.
+, smp ? false
+
+, overlays ? [
+    ( import ./overlay.nix { inherit withCcache; inherit smp; } )
+  ]
+
+, pkgs ? import nixpkgs {
+    inherit overlays;
+    config = { };
+
+    # crossSystem = {
+    #   config = "aarch64-unknown-linux-musl";
+    # };
+
+  }
 }:
 
+pkgs.pkgsIncludeOS.includeos
 
-  pkgs.pkgsIncludeOS.includeos
-  # pkgs.pkgsCross.aarch64-multiplatform.pkgsIncludeOS.includeos
+# pkgs.pkgsCross.aarch64-multiplatform.pkgsIncludeOS.includeos
