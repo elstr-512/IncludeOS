@@ -1,22 +1,26 @@
+# ./overlay.nix
 {
   withCcache, # Enable ccache. Requires correct permissions, see below.
   smp,      # Enable multicore support (SMP)
 } :
 final: prev: {
 
-  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self: {
-    llvmPkgs = prev.pkgsStatic.llvmPackages_18;
+  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self:
+    let
+
+    in {
+    llvmPkgs = prev.buildPackages.pkgsStatic.llvmPackages_18;
     stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
 
     # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.linuxHeaders; };
+    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.buildPackages.linuxHeaders; };
 
     # Import IncludeOS musl which will be built and linked with IncludeOS services
     musl-includeos = self.callPackage ./deps/musl/default.nix { };
 
     # Clang with unpatched musl for building libcxx
     clang_musl_unpatched_nolibcxx = self.llvmPkgs.clangNoLibcxx.override (old: {
-      bintools = prev.pkgsStatic.bintools.override {
+      bintools = prev.buildPackages.pkgsStatic.bintools.override {
         # Disable hardening flags while we work on the build
         defaultHardeningFlags = [];
         libc = self.musl-unpatched;
@@ -26,12 +30,12 @@ final: prev: {
 
     # Libcxx which will be built with unpatched musl
     libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
+      stdenv = (prev.buildPackages.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
     });
 
     # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc
     clang_musl_includeos_libcxx = self.llvmPkgs.libcxxClang.override (old: {
-      bintools = prev.pkgsStatic.bintools.override {
+      bintools = prev.buildPackages.pkgsStatic.bintools.override {
         # Disable hardening flags while we work on the build
         defaultHardeningFlags = [];
         libc = self.musl-includeos;
@@ -40,7 +44,7 @@ final: prev: {
       libcxx = self.libcxx_musl_unpatched;
     });
 
-    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
+    musl_includeos_stdenv_libcxx = (prev.buildPackages.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
 
     includeos_stdenv = self.musl_includeos_stdenv_libcxx;
 
@@ -70,10 +74,10 @@ final: prev: {
 
     # IncludeOS
     includeos = self.stdenv.mkDerivation rec {
-      enableParallelBuilding = true;
       pname = "includeos";
-
       version = "dev";
+
+      enableParallelBuilding = true;
 
       # Convenient access to libc, libcxx etc
       passthru.libraries = final.stdenvIncludeOS.libraries;
@@ -92,14 +96,10 @@ final: prev: {
           ];
       };
 
-      # If you need to patch, this is the place
-      postPatch = '''';
-
       nativeBuildInputs = [
         prev.buildPackages.cmake
         prev.buildPackages.nasm
       ];
-
 
       aarch64_inputs =
           if self.stdenv.targetPlatform.system == "aarch64-linux" then [
@@ -147,9 +147,6 @@ final: prev: {
       smpFlags = if smp then [ "-DSMP=ON" ] else [];
 
       cmakeFlags = archFlags ++ smpFlags;
-
-      # Add some pasthroughs, for easily building the dependencies (for debugging):
-      # $ nix-build -A NAME
 
       meta = {
         description = "Run your application with zero overhead";
