@@ -4,7 +4,7 @@
 } :
 final: prev: {
 
-  stdenvIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self: {
+  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self: {
     llvmPkgs = prev.pkgsStatic.llvmPackages_18;
     stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
 
@@ -56,7 +56,7 @@ final: prev: {
     };
   });
 
-  pkgsIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self:
+  pkgsIncludeOS = prev.lib.makeScope prev.newScope (self:
     let
 
     in {
