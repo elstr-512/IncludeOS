@@ -78,10 +78,10 @@ final: prev: {
       # Convenient access to libc, libcxx etc
       passthru.libraries = final.stdenvIncludeOS.libraries;
 
-      src = prev.pkgsStatic.lib.fileset.toSource {
+      src = prev.lib.fileset.toSource {
           root = ./.;
           # Only include files needed by IncludeOS (not examples, docs etc)
-          fileset = prev.pkgsStatic.lib.fileset.unions [
+          fileset = prev.lib.fileset.unions [
             ./src
             ./api
             ./cmake
@@ -154,7 +154,7 @@ final: prev: {
       meta = {
         description = "Run your application with zero overhead";
         homepage = "https://www.includeos.org/";
-        license = prev.pkgsStatic.lib.licenses.asl20;
+        license = prev.lib.licenses.asl20;
       };
     };
   });
