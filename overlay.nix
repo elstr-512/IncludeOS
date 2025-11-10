@@ -10,10 +10,13 @@ final: prev: {
 
     in {
     llvmPkgs = prev.buildPackages.pkgsStatic.llvmPackages_18;
-    stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
+    # stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
+
+    llvmPkgsABC = prev.pkgsStatic.llvmPackages_18;
+    stdenv = self.llvmPkgsABC.libcxxStdenv; # Use this as base stdenv
 
     # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.buildPackages.linuxHeaders; };
+    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.buildPackages.linuxHeaders; stdenv = prev.buildPackages.stdenv; };
 
     # Import IncludeOS musl which will be built and linked with IncludeOS services
     musl-includeos = self.callPackage ./deps/musl/default.nix { };
@@ -29,8 +32,8 @@ final: prev: {
     });
 
     # Libcxx which will be built with unpatched musl
-    libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.buildPackages.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
+    libcxx_musl_unpatched = self.llvmPkgsABC.libcxx.override (old: {
+      stdenv = (prev.overrideCC self.llvmPkgsABC.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
     });
 
     # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc

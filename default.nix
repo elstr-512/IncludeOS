@@ -1,9 +1,10 @@
-# ./default.nix
 {
   nixpkgs ? ./pinned.nix
 
+  # Enable ccache support. See overlay.nix for details.
 , withCcache ? false
 
+  # Enable multicore suport.
 , smp ? false
 
 , overlays ? [
@@ -22,3 +23,5 @@
 }:
 
 pkgs.pkgsIncludeOS.includeos
+
+# pkgs.pkgsCross.aarch64-multiplatform.pkgsIncludeOS.includeos
