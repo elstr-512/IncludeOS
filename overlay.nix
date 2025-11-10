@@ -58,57 +58,15 @@ final: prev: {
 
   pkgsIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self:
     let
-      ccacheNoticeHook = prev.writeTextFile {
-        name = "ccache-notice-hook";
-        destination = "/nix-support/setup-hook";
-        text = ''
-          echo "====="
-          echo "ccache is enabled!"
-          echo "If you run into any issues, try: --arg withCcache false"
-          echo "It's recommended to run tests with ccache disabled to avoid cache incoherencies."
-          echo "====="
-        '';
-      };
+
     in {
     # self.callPackage will use this stdenv.
     stdenv = final.stdenvIncludeOS.includeos_stdenv;
 
     # Deps
-    uzlib = self.callPackage ./deps/uzlib/default.nix { };
-    botan2 = self.callPackage ./deps/botan/default.nix { };
+    botan2 = self.callPackage ./deps/botan/default.nix { }; # fix include stuff
     s2n-tls = self.callPackage ./deps/s2n/default.nix { };
-    http-parser = self.callPackage ./deps/http-parser/default.nix { };
-    vmbuild = self.callPackage ./vmbuild.nix { };
-
-    ccacheWrapper = prev.ccacheWrapper.override {
-        inherit (self.stdenv) cc;
-        extraConfig = ''
-          export CCACHE_DIR="/nix/var/cache/ccache"
-          if [ ! -d "$CCACHE_DIR" ]; then
-            echo "====="
-            echo "Directory '$CCACHE_DIR' does not exist"
-            echo "Please create it with:"
-            echo "  sudo mkdir -m0770 '$CCACHE_DIR'"
-            echo "  sudo chown root:nixbld '$CCACHE_DIR'"
-            echo ""
-            echo 'Alternatively, disable ccache with `--arg withCcache false`'
-            echo "====="
-            exit 1
-          fi
-          if [ ! -w "$CCACHE_DIR" ]; then
-            echo "====="
-            echo "Directory '$CCACHE_DIR' exists, but is not accessible for user $(whoami)"
-            echo "Please verify its access permissions"
-            echo 'Alternatively, disable ccache with `--arg withCcache false`'
-            echo "====="
-            exit 1
-          fi
-
-          export CCACHE_COMPRESS=1
-          export CCACHE_UMASK=007
-          export CCACHE_SLOPPINESS=random_seed
-        '';
-      };
+    uzlib = self.callPackage ./deps/uzlib/default.nix { };
 
     # IncludeOS
     includeos = self.stdenv.mkDerivation rec {
@@ -140,7 +98,7 @@ final: prev: {
       nativeBuildInputs = [
         prev.buildPackages.cmake
         prev.buildPackages.nasm
-      ] ++ prev.lib.optionals withCcache [self.ccacheWrapper ccacheNoticeHook];
+      ];
 
 
       aarch64_inputs =
@@ -151,29 +109,29 @@ final: prev: {
 
       buildInputs = [
         self.botan2
-        self.http-parser
+        self.uzlib
+
+        prev.pkgsStatic.http-parser
         prev.pkgsStatic.openssl
         prev.pkgsStatic.rapidjson
-        #self.s2n-tls          👈 This is postponed until we can fix the s2n build.
-        self.uzlib
-        self.vmbuild
+
       ] ++ aarch64_inputs;
 
       postInstall = ''
-        echo Copying vmbuild binaries to tools/vmbuild
-        mkdir -p "$out/tools/vmbuild"
-        cp  ${self.vmbuild}/bin/* "$out/tools/vmbuild"
         cp -r  ${final.stdenvIncludeOS.libraries.libc} $out/libc
+
         mkdir $out/libcxx
         cp -r  ${final.stdenvIncludeOS.libraries.libcxx.lib} $out/libcxx/lib
         cp -r  ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
         cp -r  ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
         cp -r  ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
+
       ''
       + prev.lib.optionalString prev.stdenv.isAarch64 ''
         mkdir -p $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/include $out/dtc/include
+
       '';
 
       archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
@@ -192,23 +150,6 @@ final: prev: {
 
       # Add some pasthroughs, for easily building the dependencies (for debugging):
       # $ nix-build -A NAME
-
-      passthru.vmrunner = prev.callPackage (builtins.fetchGit {
-          url = "https://github.com/includeos/vmrunner";
-        }) {};
-      passthru.chainloader = import ./chainloader.nix { inherit withCcache; };
-      passthru.lest = self.callPackage ./deps/lest {};
-      passthru.pkgsStatic = prev.pkgsStatic; # this is for convenience for other packages that depend on includeos
-      passthru.pkgs = prev.pkgs; # this is for convenience for other packages that depend on includeos
-
-      passthru = {
-        inherit (self) uzlib;
-        inherit (self) http-parser;
-        inherit (self) botan2;
-        #inherit (self) s2n-tls;
-        inherit (self) cmake;
-        inherit (self) vmbuild;
-      };
 
       meta = {
         description = "Run your application with zero overhead";

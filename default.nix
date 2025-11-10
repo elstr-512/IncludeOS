@@ -7,12 +7,6 @@
   pkgs ? import nixpkgs { config = {}; inherit overlays; }
 }:
 
-let
-  inherit (pkgs) pkgsIncludeOS;
-in
-  assert (pkgsIncludeOS.stdenv.buildPlatform.isLinux == false) ->
-    throw "Currently only Linux builds are supported";
-  assert (pkgsIncludeOS.stdenv.hostPlatform.isMusl == false) ->
-    throw "Stdenv should be based on Musl";
 
-  pkgsIncludeOS.includeos
+  pkgs.pkgsIncludeOS.includeos
+  # pkgs.pkgsCross.aarch64-multiplatform.pkgsIncludeOS.includeos
