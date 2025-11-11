@@ -1,3 +1,4 @@
+# ./default.nix
 {
   nixpkgs ? ./pinned.nix
 
@@ -28,4 +29,3 @@
 
 pkgs.pkgsIncludeOS.includeos
 
-# pkgs.pkgsCross.aarch64-multiplatform.pkgsIncludeOS.includeos
