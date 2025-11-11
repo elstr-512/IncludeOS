@@ -34,9 +34,10 @@
     };
 
     # Target machine (the system for which you are building binaries)
-    # crossSystem = {
-    #   config = "aarch64-unknown-linux-musl";
-    # };
+    crossSystem = {
+      # config = "aarch64-unknown-linux-musl";
+      config = "x86_64-unknown-linux-musl";
+    };
 
   }
 }:
