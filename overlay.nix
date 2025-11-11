@@ -80,6 +80,10 @@ final: prev: {
       pname = "includeos";
       version = "dev";
 
+      preConfigure = ''
+        echo "PLAT: build=${self.stdenv.buildPlatform.system} host=${self.stdenv.hostPlatform.system} target=${self.stdenv.targetPlatform.system}"
+      '';
+
       enableParallelBuilding = true;
 
       # Convenient access to libc, libcxx etc
