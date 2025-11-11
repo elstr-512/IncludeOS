@@ -13,19 +13,18 @@
   ]
 
 , pkgs ? import nixpkgs {
-    inherit overlays;
+    overlays = overlays;
     config = { };
 
-    # crossSystem = {
-    #   config = "aarch64-unknown-linux-musl";
-    # };
-
     crossSystem = {
-      config = "x86_64-unknown-linux-musl";
+      config = "aarch64-unknown-linux-musl";
     };
+
+    # crossSystem = {
+    #   config = "x86_64-unknown-linux-musl";
+    # };
 
   }
 }:
 
 pkgs.pkgsIncludeOS.includeos
-

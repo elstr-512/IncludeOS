@@ -2,6 +2,11 @@
 {
   withCcache, # Enable ccache. Requires correct permissions, see below.
   smp,      # Enable multicore support (SMP)
+  buildSelf ? import ./pinned.nix {
+    crossSystem = {
+      config = "x86_64-unknown-linux-musl";
+    };
+  }
 } :
 final: prev: {
 
@@ -9,21 +14,22 @@ final: prev: {
     let
 
     in {
-    llvmPkgs = prev.llvmPackages_18;
+    llvmPkgs = buildSelf.llvmPackages_18;
+    llvmPkgsABC = prev.llvmPackages_18;
     stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
 
     # llvmPkgsABC = prev.pkgsStatic.llvmPackages_18;
     # stdenv = self.llvmPkgsABC.libcxxStdenv; # Use this as base stdenv
 
     # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.linuxHeaders; };
+    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = buildSelf.linuxHeaders; };
 
     # Import IncludeOS musl which will be built and linked with IncludeOS services
     musl-includeos = self.callPackage ./deps/musl/default.nix { };
 
     # Clang with unpatched musl for building libcxx
     clang_musl_unpatched_nolibcxx = self.llvmPkgs.clangNoLibcxx.override (old: {
-      bintools = prev.bintools.override {
+      bintools = buildSelf.bintools.override {
         # Disable hardening flags while we work on the build
         defaultHardeningFlags = [];
         libc = self.musl-unpatched;
@@ -33,12 +39,12 @@ final: prev: {
 
     # Libcxx which will be built with unpatched musl
     libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
+      stdenv = (buildSelf.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
     });
 
     # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc
     clang_musl_includeos_libcxx = self.llvmPkgs.libcxxClang.override (old: {
-      bintools = prev.bintools.override {
+      bintools = buildSelf.bintools.override {
         # Disable hardening flags while we work on the build
         defaultHardeningFlags = [];
         libc = self.musl-includeos;
@@ -47,7 +53,8 @@ final: prev: {
       libcxx = self.libcxx_musl_unpatched;
     });
 
-    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
+    # musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
+    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgsABC.libcxxStdenv self.clang_musl_includeos_libcxx);
 
     includeos_stdenv = self.musl_includeos_stdenv_libcxx;
 
