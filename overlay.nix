@@ -1,157 +1,133 @@
 # ./overlay.nix
-{
-  withCcache, # Enable ccache. Requires correct permissions, see below.
-  smp,      # Enable multicore support (SMP)
-} :
+
+{}:
 final: prev: {
 
-  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self:
+  # ────────────────────────────────
+  # Helper: Create stdenv with custom libc
+  # .
+  mkStdenvCustomLibc = { libc, stdenv ? prev.stdenv }:
     let
+      # Override bintools so linking uses the given libc
+      bintools = stdenv.cc.bintools.override { inherit libc; };
+    in
+      stdenv.override {
+        cc = stdenv.cc.override {
+          inherit libc bintools;
+          extraPackages = [ ]; # can extend this if needed
+        };
+        # Add bintools to allowed requisites so it doesn't get GC'd
+        allowedRequisites =
+          prev.lib.mapNullable
+          (rs: rs ++ [ bintools ])
+          (stdenv.allowedRequisites or null);
+      };
 
-    in {
+  # ────────────────────────────────
+  # IncludeOS scope
+  # .
+  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self: {
+    # Use LLVM toolchain
     llvmPkgs = prev.llvmPackages_18;
-    stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
 
+    # Base stdenv: clang, libc++
+    baseStdenv = self.llvmPkgs.libcxxStdenv;
 
-    # llvmPkgsABC = pkgsStatic.llvmPackages_18;
-    # stdenv = self.llvmPkgsABC.libcxxStdenv; # Use this as base stdenv
+    # ────────────────────────────────
+    # Musl configurations
+    # .
 
-    # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
+    # Unpatched musl, used for building (musl) libcxx
     musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix {
-        linuxHeaders = prev.linuxHeaders;
-      };
+      linuxHeaders = prev.linuxHeaders;
+    };
 
-    # Import IncludeOS musl which will be built and linked with IncludeOS services
-    musl-includeos = self.callPackage ./deps/musl/default.nix {
-      };
+    # IncludeOS-patched musl for the final stdenv
+    musl-includeos = self.callPackage ./deps/musl/default.nix { };
 
-    # Clang with unpatched musl for building libcxx
-    clang_musl_unpatched_nolibcxx = self.llvmPkgs.clangNoLibcxx.override (old: {
-      bintools = prev.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-unpatched;
-      };
-      libc = self.musl-unpatched;
-    });
-
-    # Libcxx which will be built with unpatched musl
-    libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
-    });
-
-    # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc
-    clang_musl_includeos_libcxx = self.llvmPkgs.libcxxClang.override (old: {
-      bintools = prev.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-includeos;
-      };
+    # Custom stdenv that uses IncludeOS musl
+    includeos_stdenv = final.mkStdenvCustomLibc {
       libc = self.musl-includeos;
-      libcxx = self.libcxx_musl_unpatched;
-    });
+      stdenv = self.baseStdenv;
+    };
 
-    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
+    # ────────────────────────────────
+    # libc++ built against musl-unpatched
+    # .
 
-    includeos_stdenv = self.musl_includeos_stdenv_libcxx;
+    # Rebuild libc++ and libc++abi against a musl-based stdenv
+    libcxx-musl = prev.llvmPackages_18.libcxx.override {
+      stdenv = final.mkStdenvCustomLibc {
+        libc = self.musl-unpatched;
+        stdenv = self.baseStdenv;
+      };
+    };
+    libcxxabi-musl = prev.llvmPackages_18.libcxxabi.override {
+      stdenv = final.mkStdenvCustomLibc {
+        libc = self.musl-unpatched;
+        stdenv = self.baseStdenv;
+      };
+    };
 
+    # ────────────────────────────────
+    # stdenvIncludeOS - libraries collection
+    #
     libraries = {
       libc = self.musl-includeos;
       libcxx = {
-        # There doesn't seem to be a single package containing both libc++ headers and libs.
-        lib = "${self.libcxx_musl_unpatched}/lib";
-        include = "${self.libcxx_musl_unpatched.dev}/include/c++/v1";
+        lib = "${self.libcxx-musl}/lib";
+        include = "${self.libcxx-musl.dev}/include/c++/v1";
       };
       libunwind = self.llvmPkgs.libraries.libunwind;
       libgcc = self.llvmPkgs.compiler-rt;
     };
   });
 
-  stdenvIosService = prev.lib.makeScope prev.newScope (self:
-    let
-
-    in {
-    llvmPkgs = prev.llvmPackages_18;
-    stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
-
-    # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix {
-        linuxHeaders = prev.linuxHeaders;
-      };
-
-    # Import IncludeOS musl which will be built and linked with IncludeOS services
-    musl-includeos = self.callPackage ./deps/musl/default.nix {
-      };
-
-    # Clang with unpatched musl for building libcxx
-    clang_musl_unpatched_nolibcxx = self.llvmPkgs.clangNoLibcxx.override (old: {
-      bintools = prev.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-unpatched;
-      };
-      libc = self.musl-unpatched;
-    });
-
-    # Libcxx which will be built with unpatched musl
-    libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
-    });
-
-    # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc
-    clang_musl_includeos_libcxx = self.llvmPkgs.libcxxClang.override (old: {
-      bintools = prev.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-includeos;
-      };
-      libc = self.musl-includeos;
-      libcxx = self.libcxx_musl_unpatched;
-    });
-
-    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
-
-    includeos_stdenv = self.musl_includeos_stdenv_libcxx;
-
-    libraries = {
-      libc = self.musl-includeos;
-      libcxx = {
-        # There doesn't seem to be a single package containing both libc++ headers and libs.
-        lib = "${self.libcxx_musl_unpatched}/lib";
-        include = "${self.libcxx_musl_unpatched.dev}/include/c++/v1";
-      };
-      libunwind = self.llvmPkgs.libraries.libunwind;
-      libgcc = self.llvmPkgs.compiler-rt;
-    };
-  });
-
+  # ────────────────────────────────
+  # Package scope: pkgsIncludeOS
+  # .
   pkgsIncludeOS = prev.lib.makeScope prev.newScope (self:
     let
 
     in {
-    # self.callPackage will use this stdenv.
-    stdenv = final.stdenvIncludeOS.includeos_stdenv;
+      # ────────────────────────────────
+      # Custom stdenv for IncludeOS
+      # .
+      # NOTE: Everything inside here builds in the
+      #       musl-based-stdenv IncludeOS environment
+      stdenv = final.stdenvIncludeOS.includeos_stdenv;
 
-    # Deps
-    botan2 = self.callPackage ./deps/botan/default.nix { }; # fix include stuff
-    s2n-tls = self.callPackage ./deps/s2n/default.nix { };
-    uzlib = self.callPackage ./deps/uzlib/default.nix { };
+      # ────────────────────────────────
+      # Dependencies which have to be rebuilt (or wrapped) to be compatible
+      # .
+      botan2 = self.callPackage ./deps/botan/default.nix { }; # fix include stuff
+      s2n-tls = self.callPackage ./deps/s2n/default.nix { };
+      uzlib = self.callPackage ./deps/uzlib/default.nix { };
 
-    # IncludeOS
-    includeos = self.stdenv.mkDerivation (this: {
-      pname = "includeos";
-      version = "dev";
+      # ────────────────────────────────
+      # IncludeOS derivation
+      # .
+      includeos = self.stdenv.mkDerivation (this: {
+        pname = "includeos";
+        version = "dev";
+        enableParallelBuilding = true;
 
-      preConfigure = ''
-        echo "PLAT: build=${self.stdenv.buildPlatform.config} host=${self.stdenv.hostPlatform.config} target=${self.stdenv.targetPlatform.config}"
-      '';
+        # Make IncludeOS’s internal libc/libcxx easily accessible
+        passthru.libraries = final.stdenvIncludeOS.libraries;
 
-      enableParallelBuilding = true;
+        # (mini) HACK: Disable PIE since IncludeOS is a static package
+        hardeningDisable = [ "pie" ];
 
-      # Convenient access to libc, libcxx etc
-      passthru.libraries = final.stdenvIncludeOS.libraries;
+        # Print the platform configurations during build
+        preConfigure = ''
+        echo "PLAT.CONFIG: build=${self.stdenv.buildPlatform.config} host=${self.stdenv.hostPlatform.config} target=${self.stdenv.targetPlatform.config}"
+        echo "PLAT.SYSTEM: build=${self.stdenv.buildPlatform.system} host=${self.stdenv.hostPlatform.system} target=${self.stdenv.targetPlatform.system}"
+        '';
 
-      src = prev.lib.fileset.toSource {
+        # ────────────────────────────────
+        # Source files
+        # .
+        src = prev.lib.fileset.toSource {
           root = ./.;
           # Only include files needed by IncludeOS (not examples, docs etc)
           fileset = prev.lib.fileset.unions [
@@ -163,30 +139,46 @@ final: prev: {
             ./lib
             ./CMakeLists.txt
           ];
-      };
+        };
 
-      nativeBuildInputs = [
-        prev.buildPackages.cmake
-        prev.buildPackages.nasm
-      ];
+        # ────────────────────────────────
+        # Build inputs
+        # .
 
-      aarch64_inputs =
-          if self.stdenv.targetPlatform.system == "aarch64-linux" then [
-            prev.pkgsStatic.dtc
-          ]
+        nativeBuildInputs = [
+          prev.buildPackages.cmake
+          prev.buildPackages.nasm
+        ];
+
+        buildInputs = [
+          self.botan2
+
+          prev.pkgsStatic.zlib
+          prev.pkgsStatic.http-parser
+          prev.pkgsStatic.openssl
+          prev.pkgsStatic.rapidjson
+
+        ] ++ this.aarch64_inputs ++ this.x86_64_inputs;
+
+        # Additional inputs depending on platform
+        x86_64_inputs =
+          if self.stdenv.targetPlatform.system == "x86_64-linux" then
+            [
+              self.uzlib
+            ]
           else [];
 
-      buildInputs = [
-        self.botan2
-        self.uzlib
+        aarch64_inputs =
+          if self.stdenv.targetPlatform.system == "aarch64-linux" then
+            [
+              prev.pkgsStatic.dtc
+            ]
+          else [];
 
-        prev.pkgsStatic.http-parser
-        prev.pkgsStatic.openssl
-        prev.pkgsStatic.rapidjson
-
-      ] ++ this.aarch64_inputs;
-
-      postInstall = ''
+        # ────────────────────────────────
+        # Post-install: bundle runtime libs
+        #.
+        postInstall = ''
         cp -r  ${final.stdenvIncludeOS.libraries.libc} $out/libc
 
         mkdir $out/libcxx
@@ -195,33 +187,40 @@ final: prev: {
         cp -r  ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
         cp -r  ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
 
-      ''
-      + prev.lib.optionalString prev.stdenv.isAarch64 ''
+        ''
+          + prev.lib.optionalString prev.stdenv.isAarch64 ''
         mkdir -p $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/include $out/dtc/include
 
-      '';
+          '';
 
-      archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
-        [
-          "-DARCH=i686"
-          "-DPLATFORM=nano" # we currently only support nano platform on i686
-        ]
-      else if self.stdenv.targetPlatform.system == "aarch64-linux" then
-        ["-DARCH=aarch64"]
-      else
-        [ "-DARCH=x86_64"];
+        # ────────────────────────────────
+        # Architecture-specific CMake flags
+        # .
+        archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
+          [
+            "-DARCH=i686"
+            "-DPLATFORM=nano" # we currently only support nano platform on i686
+          ]
+        else if self.stdenv.targetPlatform.system == "aarch64-linux" then
+          [
+            "-DARCH=aarch64"
+          ]
+        else if self.stdenv.targetPlatform.system == "x86_64-linux" then
+          [
+            "-DARCH=x86_64"
+          ]
+        else
+          [];
 
-      smpFlags = if smp then [ "-DSMP=ON" ] else [];
+        cmakeFlags = this.archFlags;
 
-      cmakeFlags = this.archFlags ++ this.smpFlags;
-
-      meta = {
-        description = "Run your application with zero overhead";
-        homepage = "https://www.includeos.org/";
-        license = prev.lib.licenses.asl20;
-      };
+        meta = {
+          description = "Run your application with zero overhead";
+          homepage = "https://www.includeos.org/";
+          license = prev.lib.licenses.asl20;
+        };
+      });
     });
-  });
 }
