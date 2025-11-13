@@ -27,23 +27,28 @@ final: prev: {
   # IncludeOS scope
   # .
   stdenvIncludeOS = prev.lib.makeScope prev.newScope (self: {
-    # Use LLVM toolchain
-    llvmPkgs = prev.llvmPackages_18;
 
-    # Base stdenv: clang, libc++
+    # Base our stdenv on musl with -> LLVM toolchain: clang, libc++
+    basePkgs = prev.pkgsMusl;
+    llvmPkgs = self.basePkgs.llvmPackages_18;
     baseStdenv = self.llvmPkgs.libcxxStdenv;
 
     # ────────────────────────────────
-    # Musl configurations
+    # Musl configurations, overwrite stdenv libc with pinned musl version
     # .
 
     # Unpatched musl, used for building (musl) libcxx
     musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix {
-      linuxHeaders = prev.linuxHeaders;
+      stdenv = self.baseStdenv;
+      pkgs = self.basePkgs;
+      linuxHeaders = self.basePkgs.linuxHeaders;
     };
 
     # IncludeOS-patched musl for the final stdenv
-    musl-includeos = self.callPackage ./deps/musl/default.nix { };
+    musl-includeos = self.callPackage ./deps/musl/default.nix {
+      stdenv = self.baseStdenv;
+      pkgs = self.basePkgs;
+    };
 
     # Custom stdenv that uses IncludeOS musl
     includeos_stdenv = final.mkStdenvCustomLibc {
