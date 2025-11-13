@@ -30,61 +30,70 @@ final: prev: {
 
     # Base our stdenv on musl with -> LLVM toolchain: clang, libc++
     basePkgs = prev.pkgsMusl;
-    llvmPkgs = self.basePkgs.llvmPackages_18;
-    baseStdenv = self.llvmPkgs.libcxxStdenv;
+    baseLLvmPkgs = self.basePkgs.llvmPackages_18;
+    baseStdenv = self.baseLLvmPkgs.libcxxStdenv;
 
     # ────────────────────────────────
-    # Musl configurations, overwrite stdenv libc with pinned musl version
+    # Musl configurations
     # .
+    # Overwrite includeos stdenv libc with patched musl version.
+    # .
+    # Libcxx is built with un-patched musl, but they must target
+    # the same musl version.
 
     # Unpatched musl, used for building (musl) libcxx
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix {
+    musl-pinned = self.callPackage ./deps/musl-unpatched/default.nix {
       stdenv = self.baseStdenv;
       pkgs = self.basePkgs;
       linuxHeaders = self.basePkgs.linuxHeaders;
     };
 
     # IncludeOS-patched musl for the final stdenv
-    musl-includeos = self.callPackage ./deps/musl/default.nix {
+    musl-includeos-patch = self.callPackage ./deps/musl/default.nix {
       stdenv = self.baseStdenv;
       pkgs = self.basePkgs;
     };
 
+    # ────────────────────────────────
+    # libc built against patched musl
+    # .
+
     # Custom stdenv that uses IncludeOS musl
     includeos_stdenv = final.mkStdenvCustomLibc {
-      libc = self.musl-includeos;
+      libc = self.musl-includeos-patch;
       stdenv = self.baseStdenv;
     };
 
     # ────────────────────────────────
-    # libc++ built against musl-unpatched
+    # libc++ built against musl-pinned
     # .
 
     # Rebuild libc++ and libc++abi against a musl-based stdenv
-    libcxx-musl = prev.llvmPackages_18.libcxx.override {
+    libcxx-musl = self.baseLLvmPkgs.libcxx.override {
       stdenv = final.mkStdenvCustomLibc {
-        libc = self.musl-unpatched;
+        libc = self.musl-pinned;
         stdenv = self.baseStdenv;
       };
     };
-    libcxxabi-musl = prev.llvmPackages_18.libcxxabi.override {
+    libcxxabi-musl = self.baseLLvmPkgs.libcxxabi.override {
       stdenv = final.mkStdenvCustomLibc {
-        libc = self.musl-unpatched;
+        libc = self.musl-pinned;
         stdenv = self.baseStdenv;
       };
     };
 
     # ────────────────────────────────
     # stdenvIncludeOS - libraries collection
-    #
+    # .
+
     libraries = {
-      libc = self.musl-includeos;
+      libc = self.musl-includeos-patch;
       libcxx = {
         lib = "${self.libcxx-musl}/lib";
         include = "${self.libcxx-musl.dev}/include/c++/v1";
       };
-      libunwind = self.llvmPkgs.libraries.libunwind;
-      libgcc = self.llvmPkgs.compiler-rt;
+      libunwind = self.baseLLvmPkgs.libraries.libunwind;
+      libgcc = self.baseLLvmPkgs.compiler-rt;
     };
   });
 
