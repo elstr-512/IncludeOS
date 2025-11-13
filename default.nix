@@ -7,7 +7,7 @@
   ]
 
 , pkgs ? import nixpkgs {
-    crossOverlays = overlays;
+    overlays = overlays;
 
     # Build machine (the system running nix-build)
     buildSystem = "x86_64-linux";
@@ -31,5 +31,11 @@
 
   }
 }:
+
+assert (pkgs.pkgsIncludeOS.stdenv.buildPlatform.isLinux == false) ->
+throw "Currently only Linux builds are supported";
+
+assert (pkgs.pkgsIncludeOS.stdenv.hostPlatform.isMusl == false) ->
+throw "Stdenv should be based on Musl";
 
 pkgs.pkgsIncludeOS.includeos
