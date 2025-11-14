@@ -108,6 +108,8 @@ final: prev: {
       #       musl-based-stdenv IncludeOS environment
       stdenv = final.stdenvIncludeOS.includeos_stdenv;
 
+      targetArch = self.stdenv.targetPlatform.uname.processor;
+
       # ────────────────────────────────
       # Dependencies which have to be rebuilt (or wrapped) to be compatible
       # .
@@ -132,7 +134,10 @@ final: prev: {
         # Print the platform configurations during build
         preConfigure = ''
         echo "PLAT.CONFIG: build=${self.stdenv.buildPlatform.config} host=${self.stdenv.hostPlatform.config} target=${self.stdenv.targetPlatform.config}"
+
         echo "PLAT.SYSTEM: build=${self.stdenv.buildPlatform.system} host=${self.stdenv.hostPlatform.system} target=${self.stdenv.targetPlatform.system}"
+
+        echo "TARGET.ARCH: arch=${self.targetArch}"
         '';
 
         # ────────────────────────────────
@@ -167,20 +172,20 @@ final: prev: {
           prev.pkgsStatic.openssl
           prev.pkgsStatic.rapidjson
 
-        ] ++ this.aarch64_inputs ++ this.x86_64_inputs;
+        ] ++ this.archBuildInputs;
 
-        # Additional inputs depending on platform
-        x86_64_inputs =
-          if self.stdenv.targetPlatform.system == "x86_64-linux" then
+        # ────────────────────────────────
+        # Architecture-specific build inputs
+        # .
+        archBuildInputs =
+          if self.targetArch == "x86_64" then
             [
               self.botan2
               self.uzlib
             ]
-          else [];
-
-        aarch64_inputs =
-          if self.stdenv.targetPlatform.system == "aarch64-linux" then
+          else if self.targetArch == "aarch64" then
             [
+              self.botan2
               prev.pkgsStatic.dtc
             ]
           else [];
@@ -208,23 +213,24 @@ final: prev: {
         # ────────────────────────────────
         # Architecture-specific CMake flags
         # .
-        archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
-          [
-            "-DARCH=i686"
-            "-DPLATFORM=nano" # we currently only support nano platform on i686
-          ]
-        else if self.stdenv.targetPlatform.system == "aarch64-linux" then
-          [
-            "-DARCH=aarch64"
-          ]
-        else if self.stdenv.targetPlatform.system == "x86_64-linux" then
-          [
-            "-DARCH=x86_64"
-          ]
-        else
-          [];
+        archCmakeFlags =
+          if self.targetArch == "i686" then
+            [
+              "-D ARCH=i686"
+              "-D PLATFORM=nano" # currently only support nano platform on i686
+            ]
+          else if self.targetArch == "aarch64" then
+            [
+              "-D ARCH=aarch64"
+            ]
+          else if self.targetArch == "x86_64" then
+            [
+              "-D ARCH=x86_64"
+            ]
+          else
+            [];
 
-        cmakeFlags = this.archFlags;
+        cmakeFlags = this.archCmakeFlags;
 
         meta = {
           description = "Run your application with zero overhead";
