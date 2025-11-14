@@ -1,6 +1,18 @@
 # ./overlay.nix
 
-{}:
+{
+  # WARN:
+  # None of the args listed below are used by this overlay,
+  # they only exist to provide compatability with the
+  # projects older *.nix files.
+
+  # Enable ccache support. See overlay.nix for details.
+  withCcache ? false
+
+  # Enable multicore suport.
+, smp ? false
+}:
+
 final: prev: {
 
   # ────────────────────────────────
@@ -104,8 +116,6 @@ final: prev: {
       # ────────────────────────────────
       # Custom stdenv for IncludeOS
       # .
-      # NOTE: Everything inside here builds in the
-      #       musl-based-stdenv IncludeOS environment
       stdenv = final.stdenvIncludeOS.includeos_stdenv;
 
       targetArch = self.stdenv.targetPlatform.uname.processor;
@@ -116,6 +126,16 @@ final: prev: {
       botan2 = self.callPackage ./deps/botan/default.nix { }; # fix include stuff
       s2n-tls = self.callPackage ./deps/s2n/default.nix { };
       uzlib = self.callPackage ./deps/uzlib/default.nix { };
+
+      # WARN:
+      # >:(
+      # The chain loader (as in the service, not i686) depends on
+      # `vmbuild`, BUT `vmbuild` should be an external package.
+      # ..
+      # It doesn't make sense to bundle (and build) `vmbuild` inside
+      # this stdenv (aka the includeos target-platform stdenv).
+      # Especially with cross compilation in mind.
+      vmbuild = self.callPackage ./vmbuild.nix { };
 
       # ────────────────────────────────
       # IncludeOS derivation
@@ -182,6 +202,11 @@ final: prev: {
             [
               self.botan2
               self.uzlib
+              self.vmbuild
+            ]
+          else if self.targetArch == "i686" then
+            [
+              self.vmbuild
             ]
           else if self.targetArch == "aarch64" then
             [
@@ -203,12 +228,22 @@ final: prev: {
         cp -r  ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
 
         ''
-          + prev.lib.optionalString prev.stdenv.isAarch64 ''
+        + prev.lib.optionalString (self.targetArch == "x86_64") ''
+        mkdir -p "$out/tools/vmbuild"
+        cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
+
+        ''
+        + prev.lib.optionalString (self.targetArch == "aarch64") ''
         mkdir -p $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
         cp -r  ${prev.pkgsStatic.dtc}/include $out/dtc/include
 
-          '';
+        ''
+        + prev.lib.optionalString (self.targetArch == "i686") ''
+        mkdir -p "$out/tools/vmbuild"
+        cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
+
+        '';
 
         # ────────────────────────────────
         # Architecture-specific CMake flags
