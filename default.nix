@@ -22,6 +22,11 @@ let
       overlays = overlays;
       crossSystem = { config = "aarch64-unknown-linux-musl"; };
     };
+
+    i686 = import nixpkgs {
+      overlays = overlays;
+      crossSystem = { config = "i686-unknown-linux-musl"; };
+    };
   };
 
   # Select pkgs configuration
@@ -31,6 +36,7 @@ let
   supportedTargets.system = [
     "x86_64-linux"
     "aarch64-linux"
+    "i686-linux"
   ];
 
   assertMsg      = pkgs.lib.asserts.assertMsg;

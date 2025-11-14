@@ -162,8 +162,6 @@ final: prev: {
         ];
 
         buildInputs = [
-          self.botan2
-
           prev.pkgsStatic.zlib
           prev.pkgsStatic.http-parser
           prev.pkgsStatic.openssl
@@ -175,6 +173,7 @@ final: prev: {
         x86_64_inputs =
           if self.stdenv.targetPlatform.system == "x86_64-linux" then
             [
+              self.botan2
               self.uzlib
             ]
           else [];
