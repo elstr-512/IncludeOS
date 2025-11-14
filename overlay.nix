@@ -126,7 +126,7 @@ final: prev: {
         # Make IncludeOS’s internal libc/libcxx easily accessible
         passthru.libraries = final.stdenvIncludeOS.libraries;
 
-        # (mini) HACK: Disable PIE since IncludeOS is a static package
+        # Disable PIE since IncludeOS is a static package
         hardeningDisable = [ "pie" ];
 
         # Print the platform configurations during build
