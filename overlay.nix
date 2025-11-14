@@ -139,6 +139,12 @@ final: prev: {
 
       # ────────────────────────────────
       # IncludeOS derivation
+      #
+      # TODO:
+      # - Figure out if runtime libs should come from:
+      #   - <prev.pkgsStatic>
+      #   - or
+      #   - something in <stdenvIncludeOS>, maybe (basePkgs)
       # .
       includeos = self.stdenv.mkDerivation (this: {
         pname = "includeos";
