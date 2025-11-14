@@ -6,22 +6,30 @@
     ( import ./overlay.nix {} )
   ]
 
-, pkgs ? import nixpkgs {
-    overlays = overlays;
+ # default target, can also be passed via command line: --argstr target <string>
+, target ? "x86_64"
 
-    # Target machine (the system for which we are building binaries)
-    #
-    crossSystem = {
-      config = "x86_64-unknown-linux-musl";
-      # config = "aarch64-unknown-linux-musl";
-    };
-  }
 }:
 
 let
+  targets = {
+    x86_64 = import nixpkgs {
+      overlays = overlays;
+      crossSystem = { config = "x86_64-unknown-linux-musl"; };
+    };
+
+    aarch64 = import nixpkgs {
+      overlays = overlays;
+      crossSystem = { config = "aarch64-unknown-linux-musl"; };
+    };
+  };
+
+  # Select pkgs configuration
+  pkgs = targets.${target};
+
+  # assert helpers
   supportedTargets.system = [
     "x86_64-linux"
-    "i686-linux"
     "aarch64-linux"
   ];
 
