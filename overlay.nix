@@ -41,7 +41,7 @@ final: prev: {
     # Libcxx is built with un-patched musl, but they must target
     # the same musl version.
 
-    # Unpatched musl, used for building (musl) libcxx
+    # Unpatched musl, used for building llvm stdenv
     musl-pinned = self.callPackage ./deps/musl-unpatched/default.nix {
       stdenv = self.baseStdenv;
       pkgs = self.basePkgs;
@@ -55,31 +55,25 @@ final: prev: {
     };
 
     # ────────────────────────────────
+    # Rebuild llvm stdenv
+    # .
+    # i.e. [libc++ libc++abi libunwind compiler-rt] against musl-pinned
+
+    includeos_llvm = self.baseLLvmPkgs.override (old: {
+      stdenv = final.mkStdenvCustomLibc {
+        libc = self.musl-pinned;
+        stdenv = self.baseStdenv;
+      };
+    });
+
+    # ────────────────────────────────
     # libc built against patched musl
     # .
-
     # Custom stdenv that uses IncludeOS musl
+
     includeos_stdenv = final.mkStdenvCustomLibc {
       libc = self.musl-includeos-patch;
       stdenv = self.baseStdenv;
-    };
-
-    # ────────────────────────────────
-    # libc++ built against musl-pinned
-    # .
-
-    # Rebuild libc++ and libc++abi against a musl-based stdenv
-    libcxx-musl = self.baseLLvmPkgs.libcxx.override {
-      stdenv = final.mkStdenvCustomLibc {
-        libc = self.musl-pinned;
-        stdenv = self.baseStdenv;
-      };
-    };
-    libcxxabi-musl = self.baseLLvmPkgs.libcxxabi.override {
-      stdenv = final.mkStdenvCustomLibc {
-        libc = self.musl-pinned;
-        stdenv = self.baseStdenv;
-      };
     };
 
     # ────────────────────────────────
@@ -87,13 +81,16 @@ final: prev: {
     # .
 
     libraries = {
-      libc = self.musl-includeos-patch;
-      libcxx = {
-        lib = "${self.libcxx-musl}/lib";
-        include = "${self.libcxx-musl.dev}/include/c++/v1";
+      # libc built against patched musl
+      libc = self.includeos_stdenv.cc.libc;
+
+      # everything else built against pinned-musl
+      libcxx = self.includeos_llvm.libcxx.overrideAttrs {
+        lib = "${self.includeos_llvm.libcxx}/lib";
+        include = "${self.includeos_llvm.libcxx.dev}/include/c++/v1";
       };
-      libunwind = self.baseLLvmPkgs.libraries.libunwind;
-      libgcc = self.baseLLvmPkgs.compiler-rt;
+      libunwind = self.includeos_llvm.libraries.libunwind;
+      libgcc = self.includeos_llvm.compiler-rt;
     };
   });
 
