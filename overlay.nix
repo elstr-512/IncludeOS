@@ -18,17 +18,34 @@ final: prev: {
   # ────────────────────────────────
   # Helper: Create stdenv with custom libc
   # .
-  mkStdenvCustomLibc = { libc, stdenv ? prev.stdenv }:
+  mkStdenvCustomLibc = { libc, stdenv }:
     let
-      # Override bintools so linking uses the given libc
+      # STEP 1: Rebuild bintools with the custom libc.
+      # .
       bintools = stdenv.cc.bintools.override { inherit libc; };
     in
+      # STEP 2: Override the C compiler with
+      #
+      # - the new libc
+      # - the new bintools
+      #
+      # Both the compiler and bintools are required to
+      # have the same libc so linking works correctly.
+      # (also nix will complain if not)
+      # .
       stdenv.override {
         cc = stdenv.cc.override {
           inherit libc bintools;
-          extraPackages = [ ]; # can extend this if needed
         };
-        # Add bintools to allowed requisites so it doesn't get GC'd
+        # STEP 3: Add bintools to allowed requisites so it doesn't get GC'd
+        #
+        # AllowedRequisites are derivations the stdenv
+        # is allowed to depend on. Without it, the
+        # garbage collector may think they are unused and
+        # remove them.
+        #
+        # mapNullable is used because allowedRequisites can be null.
+        # .
         allowedRequisites =
           prev.lib.mapNullable
           (rs: rs ++ [ bintools ])
@@ -155,6 +172,7 @@ final: prev: {
         passthru.libraries = final.stdenvIncludeOS.libraries;
 
         # Disable PIE since IncludeOS is a static package
+        # (silences a meaningless warning)
         hardeningDisable = [ "pie" ];
 
         # Print the platform configurations during build
