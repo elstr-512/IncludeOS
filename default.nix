@@ -6,13 +6,18 @@
     ( import ./overlay.nix {} )
   ]
 
- # default target, can also be passed via command line: --argstr target <string>
+  # default target, can also be passed via command line: --argstr target <string>
 , target ? "x86_64"
 
 }:
 
 let
-  targets = {
+
+  # default nix packages, so we can perform asserts even if provided target doesn't exist
+  defaultNixpkgs = import nixpkgs {};
+
+  # cross compile configured nix packages
+  supportedTargets.pkgs = {
     x86_64 = import nixpkgs {
       overlays = overlays;
       crossSystem = { config = "x86_64-unknown-linux-musl"; };
@@ -30,22 +35,32 @@ let
   };
 
   # Select pkgs configuration
-  pkgs = targets.${target};
+  pkgs = supportedTargets.pkgs.${target};
 
   # assert helpers
+  supportedTargets.name = [
+    "x86_64"
+    "aarch64"
+    "i686"
+  ];
+
   supportedTargets.system = [
     "x86_64-linux"
     "aarch64-linux"
     "i686-linux"
   ];
 
-  assertMsg      = pkgs.lib.asserts.assertMsg;
-  assertOneOf    = pkgs.lib.asserts.assertOneOf;
+  assertMsg      = defaultNixpkgs.lib.asserts.assertMsg;
+  assertOneOf    = defaultNixpkgs.lib.asserts.assertOneOf;
+
   buildPlatform  = pkgs.pkgsIncludeOS.stdenv.buildPlatform;
   compilerEnv    = pkgs.pkgsIncludeOS.stdenv.hostPlatform;
   targetPlatform = pkgs.pkgsIncludeOS.stdenv.targetPlatform;
 
 in
+
+# WARN: this assert must be at the top, as an invalid target will break further execution.
+assert assertOneOf "--argstr target <string>" "${target}" supportedTargets.name;
 
 assert assertMsg buildPlatform.isLinux
 "Currently only Linux builds are supported";
