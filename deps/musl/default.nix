@@ -32,12 +32,13 @@ stdenv.mkDerivation rec {
 
     rm $sourceRoot/arch/x86_64/syscall_arch.h
     rm $sourceRoot/arch/i386/syscall_arch.h
+    rm $sourceRoot/arch/aarch64/syscall_arch.h
   '';
 
  configurePhase = ''
     echo "Configuring with musl's configure script"
     echo "Target platform is ${stdenv.targetPlatform.config}"
-    ./configure --prefix=$out --disable-shared --enable-debug --with-malloc=oldmalloc CROSS_COMPILE=${stdenv.targetPlatform.config}-
+    ./configure --prefix=$out --disable-shared --enable-debug --with-malloc=oldmalloc
   '';
 
   CFLAGS = "-Wno-error=int-conversion -nostdinc";
