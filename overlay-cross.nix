@@ -359,7 +359,7 @@ final: prev: {
         };
       }); # end -> includeos mkDerivation
 
-      ccacheWrapper = prev.ccacheWrapper.override {
+      ccacheWrapper = prev.buildPackages.ccacheWrapper.override {
         inherit (self.stdenv) cc;
         extraConfig = ''
           export CCACHE_DIR="/nix/var/cache/ccache"
