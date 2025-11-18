@@ -1,0 +1,5 @@
+boot/*
+!boot/Makefile
+build-*/
+*.log
+compile_commands.json
