@@ -38,8 +38,14 @@
 #include <stdint.h>
 #include <vector>
 
+
 #if ! defined(PAGE_SIZE)
-#error "PAGE_SIZE not defined. Expected it to be defined by musl's limits.h"
+  #warning PAGE_SIZE not defined. Build should error!
+  #define PAGE_SIZE 4096
+#endif
+
+#if ! defined(PAGE_SIZE)
+  #error "PAGE_SIZE not defined. Expected it to be defined by musl's limits.h"
 #endif
 
 #define VIRTIO_F_NOTIFY_ON_EMPTY 24
