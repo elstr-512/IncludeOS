@@ -1,5 +1,11 @@
 # Config file to be picked up by find_package()
 @PACKAGE_INIT@
-set(ARCH "x86_64")
+
+if(NOT ARCH)
+  message(WARNING "ARCH not set! Defaulting to x86_64")
+  set(ARCH "x86_64")
+
+endif()
+
 set(INCLUDEOS_PACKAGE @CMAKE_INSTALL_PREFIX@)
 set(CMAKE_MODULE_PATH @CMAKE_INSTALL_PREFIX@/cmake)

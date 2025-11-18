@@ -20,17 +20,31 @@ if (PYTHON3_EXECUTABLE-NOTFOUND)
 endif()
 
 if (NOT DEFINED PLATFORM)
+
   if (DEFINED ENV{PLATFORM})
     set(PLATFORM $ENV{PLATFORM})
+
+  elseif("${ARCH}" STREQUAL "aarch64")
+    set(PLATFORM default)
+
   else()
     set(PLATFORM x86_pc)
+
   endif()
+
 endif()
 
 
 set(NAME_STUB "${INCLUDEOS_PACKAGE}/src/service_name.cpp")
 
-set(TRIPLE "${ARCH}-pc-linux-elf")
+if ("${ARCH}" STREQUAL "aarch64")
+  set(TRIPLE "${ARCH}-unknown-linux-musl")
+
+else()
+  set(TRIPLE "${ARCH}-pc-linux-elf")
+
+endif()
+
 
 
 if (ELF_SYMBOLS)
@@ -170,18 +184,32 @@ function(os_add_executable TARGET NAME)
     set(LIBGCC libclang_rt.builtins-${ARCH}.a)
   endif()
 
-  set(LIBRARIES
-    ${INCLUDEOS_PACKAGE}/lib/libos.a
-    ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
-    ${INCLUDEOS_PACKAGE}/lib/libarch.a
-    ${INCLUDEOS_PACKAGE}/lib/libos.a
-    ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
-    ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
-    ${INCLUDEOS_PACKAGE}/http-parser/lib/libhttp_parser.a
-    ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
-    ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
-    ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
-  )
+  if (${ARCH} STREQUAL "aarch64")
+    set(LIBRARIES
+      ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
+      ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
+      ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
+      ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
+      ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+      ${INCLUDEOS_PACKAGE}/dtc/lib/libfdt.a
+    )
+  else()
+    set(LIBRARIES
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
+      ${INCLUDEOS_PACKAGE}/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
+      ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
+      ${INCLUDEOS_PACKAGE}/http-parser/lib/libhttp_parser.a
+      ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
+      ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+      ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
+    )
+  endif()
 
   message(STATUS ">>>>> 👉 Libraries: ${LIBRARIES}")
   foreach(_LIB ${LIBRARIES})

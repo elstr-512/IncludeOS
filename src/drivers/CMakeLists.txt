@@ -27,14 +27,22 @@ set(DRIVER_SRCS
 )
 
 if (${PLATFORM} STREQUAL "default")
-  list(APPEND DRIVER_SRCS
+
+  if ("${ARCH}" STREQUAL "aarch64")
+    # TODO: IMPLEMENT ME
+
+  else()
+    list(APPEND DRIVER_SRCS
       vga_emergency.cpp
-    virtiocon.cpp
-    virtioblk.cpp
-    virtionet.cpp
-    vmxnet3.cpp
-    e1000.cpp
-  )
+      virtiocon.cpp
+      virtioblk.cpp
+      virtionet.cpp
+      vmxnet3.cpp
+      e1000.cpp
+    )
+
+  endif()
+
 elseif (${PLATFORM} STREQUAL "solo5-hvt" OR ${PLATFORM} STREQUAL "solo5-spt")
   list(APPEND DRIVER_SRCS
     solo5blk.cpp

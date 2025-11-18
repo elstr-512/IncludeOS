@@ -5,6 +5,11 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 project (includeos C CXX)
 
+if (NOT ARCH)
+  message(FATAL_ERROR "ARCH is not set")
+
+endif()
+
 option(SMP "Compile with SMP (multiprocessing)" ON)
 option(PROFILE "Compile with startup profilers" OFF)
 

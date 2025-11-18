@@ -18,7 +18,17 @@ add_definitions(-DARCH_${ARCH})
 add_definitions(-DARCH="${ARCH}")
 
 message(STATUS "Target CPU ${ARCH}")
-set(TRIPLE "${ARCH}-pc-linux-elf")
+
+if ("${ARCH}" STREQUAL "aarch64")
+  # NOTE: this is the target triple that the
+  # nix wrapped compiler expects.
+  set(TRIPLE "${ARCH}-unknown-linux-musl")
+
+else()
+  set(TRIPLE "${ARCH}-pc-linux-elf")
+
+endif()
+
 set(CMAKE_CXX_COMPILER_TARGET ${TRIPLE})
 set(CMAKE_C_COMPILER_TARGET ${TRIPLE})
 message(STATUS "Target triple ${TRIPLE}")

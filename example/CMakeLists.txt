@@ -8,8 +8,16 @@ find_package(IncludeOS)
 include(os)
 
 os_add_executable(hello_includeos "Hello world - OS included" src/main.cpp)
-os_add_drivers(hello_includeos virtionet vmxnet3 boot_logger)
-os_add_stdout(hello_includeos default_stdout)
+
+if("${ARCH}" STREQUAL "aarch64")
+  os_add_drivers(hello_includeos boot_logger)
+  os_add_stdout(hello_includeos default_stdout)
+
+else()
+  os_add_drivers(hello_includeos virtionet vmxnet3 boot_logger)
+  os_add_stdout(hello_includeos default_stdout)
+
+endif()
 
 # This would be for application specific libs.
 #os_link_libraries(hello_includeos PRIVATE your_custom_lib)
