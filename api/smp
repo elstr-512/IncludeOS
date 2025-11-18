@@ -111,6 +111,10 @@ public:
     asm("movl %%gs:(0x0), %0" : "=r" (cpuid));
 # elif defined(ARCH_i686)
     asm("movl %%fs:(0x0), %0" : "=r" (cpuid));
+# elif defined(ARCH_aarch64)
+    unsigned long long_cpuid;
+    asm("mrs %0, mpidr_el1" : "=r" (long_cpuid));
+    cpuid = static_cast<unsigned>(long_cpuid);
 # else
     #error "Implement me?"
 # endif
