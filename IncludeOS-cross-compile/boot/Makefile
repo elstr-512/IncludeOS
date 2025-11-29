@@ -28,6 +28,7 @@ kernel:
 	@echo -e "[RUN] Launching QEMU with '-kernel flag'\n"
 	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
 		-kernel $(TARGET) \
+		| tee kernel.log
 
 uboot:
 	@echo -e "[RUN] Launching QEMU (w. uboot as bios)\n"
@@ -68,5 +69,5 @@ SUBSTITUTE_ROOT := set substitute-path $(NIX_BUILD_ROOT) $(PROJECT_ROOT)
 
 gef-attatch:
 	@echo -e "[DGB] attaching gdb to qemu instance\n"
-	gdb $(TARGET) -ex "$(SUBSTITUTE_ROOT)" -ex "gef-remote --qemu-user localhost 1234" -ex "break _start" -ex "run"
+	gdb $(TARGET) -ex "$(SUBSTITUTE_ROOT)" -ex "gef-remote --qemu-user localhost 1234" -ex "break _start"
 
