@@ -7,10 +7,14 @@ project (includeos C CXX)
 
 if (NOT ARCH)
   message(FATAL_ERROR "ARCH is not set")
-
 endif()
 
-option(SMP "Compile with SMP (multiprocessing)" ON)
+if ("${ARCH}" STREQUAL "aarch64")
+  option(SMP "Compile with SMP (multiprocessing)" OFF)
+else()
+  option(SMP "Compile with SMP (multiprocessing)" ON)
+endif()
+
 option(PROFILE "Compile with startup profilers" OFF)
 
 include(cmake/includeos.cmake)
