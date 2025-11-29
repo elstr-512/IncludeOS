@@ -5,12 +5,12 @@
        will locate the libraries regardless.
 #]]
 
-find_path(LIBFDT_INCLUDE_DIR libfdt.h)
+find_path(LIBFDT_INCLUDE_DIR libfdt.h HINTS /nix/store/*/include)
 
 if (NOT LIBFDT_INCLUDE_DIR)
   message(WARNING "libfdt.h not found, is dtc installed?")
 
 else()
-  add_compile_options(-I${LIBFDT_INCLUDE_DIR})
+  add_compile_options(-I ${LIBFDT_INCLUDE_DIR})
 
 endif()
