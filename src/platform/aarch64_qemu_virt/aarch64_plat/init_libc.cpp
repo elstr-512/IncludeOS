@@ -5,17 +5,18 @@
 #include <kernel.hpp>
 #include <kernel/auxvec.h>
 #include <kernel/cpuid.hpp>
+#include <kernel/diag.hpp>
 #include <kernel/rng.hpp>
 #include <kernel/service.hpp>
+#include <kprint>
 #include <util/elf_binary.hpp>
 #include <version.h>
-#include <kprint>
 
-#define KERN_DEBUG 1
-#ifdef KERN_DEBUG
-#define PRATTLE(fmt, ...) kprintf(fmt, ##__VA_ARGS__)
+#define KERN_DEBUG_AARCH64 1
+#ifdef KERN_DEBUG_AARCH64
+#define KDEBUG_AARCH64(fmt, ...) kprintf(fmt, ##__VA_ARGS__)
 #else
-#define PRATTLE(fmt, ...) /* fmt */
+#define KDEBUG_AARCH64(fmt, ...) /* fmt */
 #endif
 
 extern char _ELF_START_;
@@ -31,40 +32,39 @@ static void global_ctor_test(){
   global_ctors_ok = 42;
 }
 
+namespace kernel::diag {
+  void default_post_init_libc() noexcept {
+    Expects(global_ctors_ok == 42 && "Global constructors functional");
+    Elf_binary<Elf64> elf{{(char*)&_ELF_START_, static_cast<size_t>(&_ELF_END_ - &_ELF_START_)}};
+    Expects(elf.is_ELF() && "ELF header intact");
+  }
+  void __attribute__((weak)) post_init_libc() noexcept {
+    default_post_init_libc();
+  }
+}
+
 extern "C"
 int kernel_main(int, char * *, char * *)
 {
-  PRATTLE("<kernel_main> libc initialization complete \n");
-  LL_ASSERT(global_ctors_ok == 42);
+  KDEBUG_AARCH64("<kernel_main> libc initialization complete \n");
   kernel::state().libc_initialized = true;
-
-  Elf_binary<Elf64> elf{{(char*)&_ELF_START_, static_cast<size_t>(&_ELF_END_ - &_ELF_START_)}};
-  LL_ASSERT(elf.is_ELF() && "ELF header intact");
-
-  PRATTLE("<kernel_main> OS start \n");
+  kernel::diag::hook<kernel::diag::post_init_libc>();
 
   // Initialize early OS, platform and devices
+  KDEBUG_AARCH64("<kernel_main> OS start \n");
   kernel::start(fdt_addr);
-  /*#if defined(PLATFORM_x86_pc)
-  kernel::start(grub_magic, grub_addr);
-#elif defined(PLATFORM_x86_solo5)
-  //kernel::start((const char*) (uintptr_t) grub_magic);
-  kernel::start("Testing");
-#else
-  LL_ASSERT(0 && "Implement call to kernel start for this platform");
-#endif
-*/
-  PRATTLE("<kernel_main> sanity checks \n");
+
   // verify certain read-only sections in memory
   // NOTE: because of page protection we can choose to stop checking here
+  KDEBUG_AARCH64("<kernel_main> sanity checks \n");
   kernel_sanity_checks();
 
-  PRATTLE("<kernel_main> post start \n");
   // Initialize common subsystems and call Service::start
+  KDEBUG_AARCH64("<kernel_main> post start \n");
   kernel::post_start();
 
-  PRATTLE("<kernel_main> os_event_loop \n");
   // Starting event loop from here allows us to profile OS::start
+  KDEBUG_AARCH64("<kernel_main> os_event_loop \n");
   os::event_loop();
   return 0;
 }
@@ -77,25 +77,24 @@ int __libc_start_main(int (*main)(int,char **,char **), int argc, char **argv);
 
 void init_libc(uintptr_t fdt)
 {
-  fdt_addr=fdt;
-  //    grub_magic = magic;
-  //    grub_addr  = addr;
+  fdt_addr = fdt;
 
-  PRATTLE("* Elf start: %p\n", &_ELF_START_);
+  KDEBUG_AARCH64("* Elf start: %p\n", &_ELF_START_);
   auto* ehdr = (Elf64_Ehdr*)&_ELF_START_;
   auto* phdr = (Elf64_Phdr*)((char*)ehdr + ehdr->e_phoff);
   LL_ASSERT(phdr);
+
   Elf_binary<Elf64> elf{{(char*)&_ELF_START_, static_cast<size_t>(&_ELF_END_ - &_ELF_START_)}};
   LL_ASSERT(elf.is_ELF());
   LL_ASSERT(phdr[0].p_type == PT_LOAD);
 
-#ifdef KERN_DEBUG
-  PRATTLE("* Elf ident: %s, program headers: %p\n", ehdr->e_ident, ehdr);
+#ifdef KERN_DEBUG_AARCH64
+  KDEBUG_AARCH64("* Elf ident: %s, program headers: %p\n", ehdr->e_ident, ehdr);
   size_t size =  &_ELF_END_ - &_ELF_START_;
-  PRATTLE("\tElf size: %zu \n", size);
+  KDEBUG_AARCH64("\tElf size: %zu \n", size);
   for (int i = 0; i < ehdr->e_phnum; i++)
   {
-    PRATTLE("\tPhdr %i @ %p, va_addr: 0x%lx \n", i, &phdr[i], phdr[i].p_vaddr);
+    KDEBUG_AARCH64("\tPhdr %i @ %p, va_addr: 0x%lx \n", i, &phdr[i], phdr[i].p_vaddr);
   }
 #endif
 
@@ -107,9 +106,6 @@ void init_libc(uintptr_t fdt)
   int argc = 1;
 
   // Env vars
-  /*argv[2] = strdup("LC_CTYPE=C");*/
-  /*argv[3] = strdup("LC_ALL=C");*/
-  /*argv[4] = strdup("USER=root");*/
   argv[2] = std::pmr::string("LC_CTYPE=C").data();
   argv[3] = std::pmr::string("LC_ALL=C").data();
   argv[4] = std::pmr::string("USER=root").data();
@@ -117,7 +113,7 @@ void init_libc(uintptr_t fdt)
 
   // auxiliary vector
   auxv_t* aux = (auxv_t*) &argv[6];
-  PRATTLE("* Initializing aux-vector @ %p\n", aux);
+  KDEBUG_AARCH64("* Initializing aux-vector @ %p\n", aux);
 
   int i = 0;
   aux[i++].set_long(AT_PAGESZ, 4096);
@@ -143,19 +139,22 @@ void init_libc(uintptr_t fdt)
   aux[i++].set_ptr(AT_PLATFORM, plat);
 
   // supplemental randomness
-  const long canary = rng_extract_uint64() & 0xFFFFFFFFFFFF00FFul;
-  //  const long canary=0xB15DCAFE;
+  const long canary = rng_extract_uint64() & 0xFFFFFFFFFFFF00FFul; // WARN: SMP BREAKS
+  KDEBUG_AARCH64("* Stack protector value: %#lx\n", canary);
+
   const long canary_idx = i;
   aux[i++].set_long(AT_RANDOM, canary);
-  kprintf("* Stack protector value: %#lx\n", canary);
+
   // entropy slot
   aux[i++].set_ptr(AT_RANDOM, &aux[canary_idx].a_un.a_val);
   aux[i++].set_long(AT_NULL, 0);
 
+  // TODO: what the heck is going on underneath
+
 #ifdef PLATFORM_x86_pc
   // SYSCALL instruction
 #if defined(__x86_64__)
-  PRATTLE("* Initialize syscall MSR (64-bit)\n");
+  KDEBUG_AARCH64("* Initialize syscall MSR (64-bit)\n");
   uint64_t star_kernel_cs = 8ull << 32;
   uint64_t star_user_cs   = 8ull << 48;
   uint64_t star = star_kernel_cs | star_user_cs;
@@ -164,13 +163,13 @@ void init_libc(uintptr_t fdt)
 #elif defined(__aarch64__)
   //do nothing.. syscalls should result in svc,hvc etc instructions trapping the exception handler
 #elif defined(__i386__)
-  PRATTLE("Initialize syscall intr (32-bit)\n");
+  KDEBUG_AARCH64("Initialize syscall intr (32-bit)\n");
   #warning Classical syscall interface missing for 32-bit
 #endif
 #endif
 
-  // GDB_ENTRY;
-  PRATTLE("* Starting libc initialization\n"); // +
+  // GDB_ENTRY; <- WHAT ?
+  KDEBUG_AARCH64("* Starting libc initialization\n");
   kernel::state().allow_syscalls = true;
   __libc_start_main(kernel_main, argc, argv.data());
 }
