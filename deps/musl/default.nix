@@ -1,8 +1,9 @@
 {
-stdenv
+  stdenv
 , pkgs
 , linuxHeaders ? null
 }:
+
 stdenv.mkDerivation rec {
   pname = "musl-includeos";
   version = "1.2.5";
@@ -33,15 +34,15 @@ stdenv.mkDerivation rec {
     rm $sourceRoot/arch/x86_64/syscall_arch.h
     rm $sourceRoot/arch/i386/syscall_arch.h
     rm $sourceRoot/arch/aarch64/syscall_arch.h
-  '';
+    '';
 
- configurePhase = ''
+  configurePhase = ''
     echo "Configuring with musl's configure script"
     echo "Target platform is ${stdenv.targetPlatform.config}"
     ./configure --prefix=$out --disable-shared --enable-debug --with-malloc=oldmalloc
-  '';
+    '';
 
-  CFLAGS = "-Wno-error=int-conversion -nostdinc";
+  CFLAGS = [ "-nostdinc" "-mstrict-align" ];
 
   meta = {
     description = "musl - Linux based libc, built with IncludeOS linux-like syscalls";
