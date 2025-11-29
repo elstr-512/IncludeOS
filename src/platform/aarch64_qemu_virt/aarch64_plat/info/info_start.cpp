@@ -45,6 +45,7 @@ void info_kernel_main(uint64_t dtb_addr32, uint64_t x1, uint64_t x2, uint64_t x3
 
 
   uart_puts("\n--- Device Tree State --- \n");
+  uart_printf("dtb addr32: %lx\n", dtb_addr32);
   void *fdt = (void *)dtb_addr32;
 
   // Validate FDT header
