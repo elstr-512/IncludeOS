@@ -31,19 +31,23 @@ SECTIONS
   * - Flash  0x0000_0000
   * - RAM    0x4000_0000
   *
+  *  (1 GB = 0x4000_0000)
+  *
   * WARN: For guests NOT using the Linux kernel boot protocol:
   *       DTB is at the start of RAM 0x4000_0000, do not overwrite it!
   **/
 
 
-  PROVIDE (_ELF_START_ = . + 0x40400000);
+  . = 0x40400000;
+  PROVIDE (_ELF_START_ = .);
+  PROVIDE (_LOAD_START_ = _ELF_START_); /* For convenience w. multiboot */
 
   __boot_magic = (_ELF_START_ - 0x10);
   __stack_top  = (_ELF_START_ - 0x1000);
 
   . = _ELF_START_ + SIZEOF_HEADERS;
 
-  .text ALIGN(0x1000) :
+  .text ALIGN(0x1000):
   {
     PROVIDE(_TEXT_START_ = .);
     *(.text.boot)
@@ -55,7 +59,7 @@ SECTIONS
   PROVIDE(_TEXT_END_ = .);
 
   /* Global offset-table. For dynamic linking */
-  .got ALIGN(0x10) :
+  .got ALIGN(0x10):
   {
     *(.got*)
   }
@@ -65,7 +69,7 @@ SECTIONS
   *  from GNU LD default linker script
   */
 
-  .preinit_array :
+  .preinit_array ALIGN(0x10):
     {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array))
@@ -80,7 +84,7 @@ SECTIONS
   */
 
   /* OS / stdlib constructors */
-  .init_array :
+  .init_array ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__init_array_start = .);
     */lib/lib*.a:*(.init_array* .ctors*)
@@ -89,7 +93,7 @@ SECTIONS
   }
 
   /* Stdout g constructors */
-  .stdout_ctors :
+  .stdout_ctors ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__stdout_ctors_start = .);
     */drivers/stdout/lib*.a:*(.init_array* .ctors*)
@@ -97,7 +101,7 @@ SECTIONS
   }
 
   /* Driver g constructors */
-  .driver_ctors :
+  .driver_ctors ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__driver_ctors_start = .);
     */drivers/lib*.a:*(.init_array* .ctors*)
@@ -105,7 +109,7 @@ SECTIONS
   }
 
   /* Plugin constructors */
-  .plugin_ctors :
+  .plugin_ctors ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__plugin_ctors_start = .);
     */plugins/lib*.a:*(.init_array* .ctors*)
@@ -113,7 +117,7 @@ SECTIONS
   }
 
   /* All other constructors */
-  .service_ctors :
+  .service_ctors ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__service_ctors_start = .);
     KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
@@ -121,7 +125,7 @@ SECTIONS
     PROVIDE_HIDDEN (__service_ctors_end = .);
   }
 
-  .fini_array :
+  .fini_array ALIGN(0x10):
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
     KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
@@ -129,11 +133,13 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   }
 
+  . = ALIGN(0x10);
   _EXEC_END_ = .;
 
+  . = ALIGN(0x1000);
   _READONLY_START_ = .;
 
-  .config ALIGN(0x1000):
+  .config ALIGN(0x10):
   {
     _CONFIG_JSON_START_ = .;
     KEEP(*(.config))
@@ -141,7 +147,7 @@ SECTIONS
     BYTE(0);
   }
 
-  .rodata :
+  .rodata ALIGN(0x10):
   {
     _RODATA_START_ = .;
     *(.rodata*)
@@ -149,23 +155,21 @@ SECTIONS
     _RODATA_END_ = .;
   }
 
-  .tdata ALIGN(0x10) :
+  .tdata ALIGN(0x10):
   {
     _TDATA_START_ = .;
     *(.tdata .tdata.*)
     _TDATA_END_ = .;
-    . = ALIGN(0x10);
   }
 
-  .tbss :
+  .tbss ALIGN(0x10):
   {
     _TBSS_START_ = .;
     *(.tbss .tbss.*)
     _TBSS_END_ = .;
-    . = ALIGN(0x10);
   }
 
-  .memdisk :
+  .memdisk ALIGN(0x10):
   {
     _DISK_START_ = .;
     *(.diskdata)
@@ -177,21 +181,24 @@ SECTIONS
   {
     KEEP(*(.eh_frame_hdr*))
   }
-  .eh_frame ALIGN(0x8):
+
+  .eh_frame ALIGN(0x10):
   {
     PROVIDE (__eh_frame_start = .);
     KEEP(*(.eh_frame))
     LONG (0);
   }
 
-  .gcc_except_table :
+  .gcc_except_table ALIGN(0x10):
   {
     *(.gcc_except_table)
   }
-  _READONLY_END_ = .;
 
+  . = ALIGN(0x10);
+  _READONLY_END_ = .;
   . = ALIGN(0x1000);
-  .data :
+
+  .data ALIGN(0x10):
   {
     _DATA_START_ = .;
     *(.data)
@@ -200,14 +207,13 @@ SECTIONS
     _DATA_END_ = .;
   }
 
-  . = ALIGN(0x10);
-  .elf_symbols :
+  .elf_symbols ALIGN(0x10):
   {
     _ELF_SYM_START_ = .;
     LONG (0);
   }
 
-  .bss ALIGN(0x100) :
+  .bss ALIGN(0x10):
   {
     _BSS_START_ = .;
     *(.bss .bss.* .gnu.linkonce.b.*)
