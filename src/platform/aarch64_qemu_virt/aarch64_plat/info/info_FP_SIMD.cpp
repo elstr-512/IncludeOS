@@ -1,26 +1,24 @@
-#include "info_uart_print.hpp"
-
-#include <arm_neon.h>
-#include <cstdint>
 
 extern "C" {
 
-// Arguments for aarch64, dtb_addr32 = x0
+#include "info_uart_print.hpp"
+#include <arm_neon.h>
+#include <cstdint>
+
 void info_FP_SIMD(void) {
 
-  uart_printf("\n--- Testing floats ---\n");
+  uart_puts("\n--- Testing floats ---\n");
   double fa = 12.4321;
   double fb = 67.9876;
   double fc = 80.4197;
 
-  uart_printf("uart_printf cannot print floats :P\n");
   if ( (fa + fb) == fc) {
-    uart_printf("floats OK! \n");
+    uart_puts("floats OK! \n");
   } else {
-    uart_printf("floats NOT ok! \n");
+    uart_puts("floats NOT ok! \n");
   }
 
-  uart_printf("\n--- Testing SIMD ---\n");
+  uart_puts("\n--- Testing SIMD ---\n");
   uint32x4_t va = {1, 2, 3, 4};
   uint32x4_t vb = {10, 20, 30, 40};
   uint32x4_t vc = vaddq_u32(va, vb);
@@ -34,12 +32,9 @@ void info_FP_SIMD(void) {
     va[3] + vb[3] == result[3];
 
   if (simd_check) {
-    uart_printf("SIMD test result: %d %d %d %d\n",
-                result[0], result[1], result[2], result[3]);
-
-    uart_printf("SIMD OK! \n");
+    uart_puts("SIMD OK! \n");
   } else {
-    uart_printf("SIMD NOT ok! \n");
+    uart_puts("SIMD NOT ok! \n");
   }
 }
 

@@ -1,12 +1,12 @@
-#include "info_uart_print.hpp"
-
-#include <cstdint>
 
 extern "C" {
   #include <libfdt.h>
 }
 
 extern "C" {
+
+#include "info_uart_print.hpp"
+#include <cstdint>
 
 static uint64_t read_current_el(void) {
   uint64_t el;
@@ -21,21 +21,27 @@ static uint64_t read_sctlr_el1(void) {
 }
 
 static void print_boot_state(void) {
-  uint64_t el = read_current_el();
-  uint64_t sctlr = read_sctlr_el1();
   uart_puts("\n--- Boot State --- \n");
-  uart_puts("EL: "); uart_putc('0' + el); uart_puts("\n");
-  uart_puts((sctlr & 1) ? "MMU: enabled\n" : "MMU: disabled\n");
+  uart_printf("EL: %d\n", read_current_el());
+  uart_puts(
+    (read_sctlr_el1() & 1) ? "MMU: enabled\n" : "MMU: disabled\n"
+  );
 }
 
-// Arguments for aarch64, after boot dtb_addr32 is in register -> x0
+constexpr uint64_t qemu_dtb_default = 0x40000000;
+// Arguments for aarch64.
+// After boot (with bootloader using the linux boot protocol, like u-boot)
+// dtb_addr32 should be in register -> x0.
+// qemu does not do this, for qemu just hardcode location...
 void info_kernel_main(uint64_t dtb_addr32, uint64_t x1, uint64_t x2, uint64_t x3) {
+
+  uart_func_enter("info_kernel_main");
+  uart_printf("registers: x0 = %x, x1 = %x, x2 = %x, x3 = %x\n", dtb_addr32, x1, x2, x3);
 
   print_boot_state();
 
   if(dtb_addr32 == 0) {
     // NOTE: set to default qemu-system-aarch64 location
-    const uint64_t qemu_dtb_default = 0x40000000;
     dtb_addr32 = qemu_dtb_default;
   }
 
@@ -45,7 +51,7 @@ void info_kernel_main(uint64_t dtb_addr32, uint64_t x1, uint64_t x2, uint64_t x3
 
 
   uart_puts("\n--- Device Tree State --- \n");
-  uart_printf("dtb addr32: %lx\n", dtb_addr32);
+  uart_printf("dtb addr32: 0x%x\n", dtb_addr32);
   void *fdt = (void *)dtb_addr32;
 
   // Validate FDT header
