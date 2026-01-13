@@ -25,6 +25,7 @@ uint64_t os::nanos_asleep() noexcept {
 extern kernel::ctor_t __stdout_ctors_start;
 extern kernel::ctor_t __stdout_ctors_end;
 
+extern void __arch_init_paging();
 
 void kernel::start(uint64_t fdt_addr) // boot_magic, uint32_t boot_addr)
 {
@@ -37,8 +38,12 @@ void kernel::start(uint64_t fdt_addr) // boot_magic, uint32_t boot_addr)
 
   kernel::run_ctors(&__stdout_ctors_start, &__stdout_ctors_end);
 
+
   // Print a fancy header
   CAPTION("#include<os> // Literally");
+
+  __arch_init_paging();
+
   __platform_init(fdt_addr);
 }
 
@@ -67,6 +72,7 @@ void os::event_loop()
   do {
     os::halt();
     Events::get(0).process_events();
+    kprintf("* os::event_loop \n");
   } while (kernel::is_running());
 
   MYINFO("Stopping service");

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <os>
 #include <kernel/events.hpp>
 #include <kernel/timers.hpp>
@@ -7,6 +8,10 @@
 #include <kernel.hpp>
 #include <kernel/rng.hpp>
 #include <timer.h>
+
+#include <info>
+
+#include <hw/pci_manager.hpp>
 
 #include <smp>
 
@@ -33,16 +38,38 @@ void (*current_intr_handler)() = nullptr;
 
 void __platform_init(uint64_t fdt_addr)
 {
-  //printf("printf os start\r\n");
-  //belongs in platform ?
+  INFO("aarch64", "__platform_init");
+
   const char *fdt=(const char *)fdt_addr;
-  printf("fdt addr %zx\r\n",fdt_addr);
-  //checks both magic and version
-  if ( fdt_check_header(fdt) != 0 )
-  {
-    printf("FDT Header check failed\r\n");
+
+  INFO("FDT", "fdt addr %p", (void *)fdt_addr);
+
+  // Validate FDT header
+  int res = fdt_check_header(fdt);
+  if (res != 0) {
+    INFO2("Invalid FDT header!");
     return;
   }
+  INFO2("FDT header OK!");
+
+  // Print model name (if available)
+  int root = fdt_path_offset(fdt, "/");
+  if (root >= 0) {
+    const char *model = (char*) fdt_getprop(fdt, root, "model", NULL);
+    if (model) {
+      INFO("FDT", "Model: %s", model);
+    }
+  }
+
+  // Count the nodes
+  int node;
+  uint32_t node_count = 0;
+  fdt_for_each_subnode(node, fdt, root) {
+    node_count++;
+  }
+  INFO("FDT", "Root subnode count: %d", node_count);
+
+
   const int intc = fdt_path_offset(fdt, "/intc");
 
   if (intc < 0) //interrupt controller not found in fdt.. should never happen..
@@ -52,7 +79,7 @@ void __platform_init(uint64_t fdt_addr)
   }
   if (fdt_node_check_compatible(fdt,intc,"arm,cortex-a15-gic") == 0)
   {
-    printf("init gic\r\n");
+    printf("init gic (arm,cortex-a15-gic)\r\n");
     gic_init_fdt(fdt,intc);
   }
 
@@ -64,6 +91,9 @@ void __platform_init(uint64_t fdt_addr)
     bool intr_enabled = false;
   };
   static SMP::Array<timer_data> timerdata;
+
+  // Scan PCI buses
+  // hw::PCI_manager::init();
 
 #define TIMER_IRQ 27
 
@@ -120,10 +150,14 @@ void __platform_init(uint64_t fdt_addr)
 void __arch_poweroff()
 {
 
-  kprint("ARCH poweroff\n");
-  vm_exit();
-  //TODO check that this is sane on ARM
-  //  while (1) asm("hlt #0xf000;");
+  kprint("[ aarch64 ] poweroff (what.?)\n");
+
+  // QEMU Hypervisor call -> power off
+  // -----------
+
+  asm volatile ("ldr x0, =0x84000008");
+  asm volatile ("hvc     #0");
+
   __builtin_unreachable();
 }
 
