@@ -4,15 +4,23 @@
 # Could instead be a justfile.
 # .
 
+MACHINE_GICv2 := virt
+MACHINE_GICv3 := virt,gic-version=3
+
+MACHINE_FLAGS := $(MACHINE_GICv3)
 
 # ────────────────────────────────
 # Utils
 # .
 dump-dtb:
 	@echo -e "[DTB] Dump QEMU device-tree-blob\n"
-	@qemu-system-aarch64 -machine virt,dumpdtb=dtb-out.dtb
+	@qemu-system-aarch64 -m 1024M -cpu cortex-a53 -machine $(MACHINE_FLAGS),dumpdtb=dtb-out.dtb
 	@dtc dtb-out.dtb -o dtb-out.txt
 	@echo "[DTB] human readable dtb dumped to dtb-out.txt"
+
+help-qemu:
+	@echo -e "[HELP]\n"
+	@qemu-system-aarch64 -m 1024M -cpu cortex-a53 -machine $(MACHINE_FLAGS),help
 
 nix-repl:
 	@echo -e "[NIX] Opening nix repl \n"
@@ -26,8 +34,9 @@ TARGET := hello_includeos.elf.bin
 
 kernel:
 	@echo -e "[RUN] Launching QEMU with '-kernel flag'\n"
-	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
+	qemu-system-aarch64 -m 1024M -machine $(MACHINE_FLAGS) -cpu cortex-a53 -nographic \
 		-kernel $(TARGET) \
+		-d int,mmu -D qemu.log \
 		| tee kernel.log
 
 uboot:
@@ -36,13 +45,13 @@ uboot:
 	@echo -e "[GUIDE] use the 'go' cmd to start application"
 	@echo -e "[GUIDE] found at address of the <_start> label \n"
 	aarch64-unknown-linux-musl-objdump -d hello_includeos.elf.bin | head | tail -n 5
-	qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
+	qemu-system-aarch64 -m 1024M -machine $(MACHINE_FLAGS) -cpu cortex-a53 -nographic \
 		-bios u-boot.bin -kernel $(TARGET) \
 		| tee uboot.log
 
 image-boot: $(TARGET)
 	@aarch64-unknown-linux-musl-objcopy -O binary $(TARGET) includeos.img
-	@qemu-system-aarch64 -m 1024M -machine virt -cpu cortex-a53 -nographic \
+	@qemu-system-aarch64 -m 1024M -machine $(MACHINE_FLAGS) -cpu cortex-a53 -nographic \
 		-bios u-boot.bin -kernel includeos.img \
 
 # ────────────────────────────────
@@ -51,7 +60,7 @@ image-boot: $(TARGET)
 
 debug:
 	@echo -e "[DGB] Launching QEMU with '-kernel flag' AND waiting for debugger\n"
-	qemu-system-aarch64 -s -S -m 1024M -machine virt -cpu cortex-a53 -nographic \
+	qemu-system-aarch64 -s -S -m 1024M -machine $(MACHINE_FLAGS) -cpu cortex-a53 -nographic \
 		-kernel $(TARGET) \
 		-d int,mmu -D qemu.log
 
