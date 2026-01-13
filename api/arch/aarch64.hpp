@@ -23,6 +23,8 @@
   #define ARCH_aarch64
 #endif
 
+#include <cstdint>
+
 //TODO VERIFY
 //2^47
 namespace os {
