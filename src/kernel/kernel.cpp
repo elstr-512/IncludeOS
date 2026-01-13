@@ -165,6 +165,10 @@ void kernel::post_start()
       printf(" +-->        To make this warning fatal, re-compile with FOR_PRODUCTION=ON.\n");
     }
     FILLINE('~');
+
+  } else {
+    printf(" +--> NOTE: Random source found?\n");
+    FILLINE('~');
   }
 
   // service program start
