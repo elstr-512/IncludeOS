@@ -1,15 +1,22 @@
-/*
-* traps_aarch64.S
-* Exception vector table and entry stubs for IncludeOS AArch64
-*
-* Compatible with EL1 kernels (running under QEMU virt)
-*/
+/* --------------------------------------------------------------------------
+ * asm-exception_vector.S
+ *
+ * Exception vector table and entry stubs for AArch64 EL1
+ * -------------------------------------------------------------------------- */
 
 .section .text.exceptions
-.align 11                        // 2KB alignment required; 2^11 = 2048
-.global exception_vector
 
-// --- Vector table layout ----------------------------------------
+// --- Install exception vector table ----------------------------------------
+.global install_exception_vector_EL1
+install_exception_vector_EL1:
+    ldr     x0, =exception_vector
+    msr     VBAR_EL1, x0
+    isb
+    ret
+
+// --- Exception Vector table ----------------------------------------
+.align 11                       // 2KB alignment required; 2^11 = 2048
+.global exception_vector
 exception_vector:
     // 0x000 - Synchronous from current EL using SP_EL0
     b   sync_current_el_sp0
@@ -50,28 +57,43 @@ exception_vector:
     .org exception_vector + 0x780
     b   serr_lower_el_aarch32
 
-    //-------------------------------------------------------------------
-    // Generic handler stubs
-    //-------------------------------------------------------------------
+    // --- Macros ------------------------------------------------
 
+    // Save registers
+    // NOTE: registers x0-x18 and x29-x30
     .macro SAVE_REGS
-    sub sp, sp, #(16*5)
+    sub sp, sp, #(16*11)
     stp x0, x1, [sp, #(16*0)]
     stp x2, x3, [sp, #(16*1)]
     stp x4, x5, [sp, #(16*2)]
     stp x6, x7, [sp, #(16*3)]
     stp x8, x9, [sp, #(16*4)]
+    stp x10, x11, [sp, #(16*5)]
+    stp x12, x13, [sp, #(16*6)]
+    stp x14, x15, [sp, #(16*7)]
+    stp x16, x17, [sp, #(16*8)]
+    stp x18, x29, [sp, #(16*9)]
+    stp x30, xZR, [sp, #(16*10)]
     .endm
 
+    // Restore registers
+    // NOTE: registers x0-x18 and x29-x30
     .macro RESTORE_REGS
+    ldp x30, xZR, [sp, #(16*10)]
+    ldp x18, x29, [sp, #(16*9)]
+    ldp x16, x17, [sp, #(16*8)]
+    ldp x14, x15, [sp, #(16*7)]
+    ldp x12, x13, [sp, #(16*6)]
+    ldp x10, x11, [sp, #(16*5)]
     ldp x8, x9, [sp, #(16*4)]
     ldp x6, x7, [sp, #(16*3)]
     ldp x4, x5, [sp, #(16*2)]
     ldp x2, x3, [sp, #(16*1)]
     ldp x0, x1, [sp, #(16*0)]
-    add sp, sp, #(16*5)
+    add sp, sp, #(16*11)
     .endm
 
+    // Call C handler
     .macro EXCEPTION_ENTRY type
     SAVE_REGS
     mrs x1, ESR_EL1
@@ -79,12 +101,12 @@ exception_vector:
     mrs x3, SPSR_EL1
     mrs x4, ELR_EL1
     mov x0, \type
-    bl  exception_entry           // call C handler
+    bl  exception_entry
     RESTORE_REGS
     eret
     .endm
 
-//--- handlers for each exception type -------------------------------
+//--- Handlers for each exception type ( TODO: enum exception-types) ----------------
 sync_current_el_sp0:       EXCEPTION_ENTRY 0
 irq_current_el_sp0:        EXCEPTION_ENTRY 1
 fiq_current_el_sp0:        EXCEPTION_ENTRY 2
