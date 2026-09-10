@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     (cd $out/include && ln -s $(ls -d ${linuxHeaders}/include/* | grep -v "scsi$") .)
   '';
 
-  CFLAGS = "-Wno-error=int-conversion -nostdinc";
+  CFLAGS = [ "-nostdinc" ];
 
   passthru.linuxHeaders = linuxHeaders;
 

@@ -40,7 +40,7 @@ stdenv.mkDerivation rec {
     ./configure --prefix=$out --disable-shared --enable-debug --with-malloc=oldmalloc
   '';
 
-  CFLAGS = "-Wno-error=int-conversion -nostdinc";
+  CFLAGS = [ "-nostdinc" ];
 
   meta = {
     description = "musl - Linux based libc, built with IncludeOS linux-like syscalls";
