@@ -34,55 +34,57 @@ final: prev: {
         };
       };
 
-  stdenvIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self: {
-    llvmPkgs = prev.pkgsStatic.llvmPackages_20;
-    stdenv = self.llvmPkgs.libcxxStdenv; # Use this as base stdenv
+  # Build environment for InlcudeOS
+  stdenvIncludeOS = prev.lib.makeScope prev.newScope (self: {
+    # Base our stdenv on musl with -> LLVM toolchain: clang, libc++
+    basePkgs = prev.pkgsMusl;
+    baseLLvmPkgs = self.basePkgs.llvmPackages_20;
+    baseStdenv = self.baseLLvmPkgs.libcxxStdenv;
 
-    # Import unpatched musl for building libcxx. Libcxx needs some linux headers to be passed through.
-    musl-unpatched = self.callPackage ./deps/musl-unpatched/default.nix { linuxHeaders = prev.linuxHeaders; };
+    # Musl configurations
+    # - Overwrite includeos stdenv libc with patched musl version.
+    # - Libcxx is built with un-patched musl, but they must target
+    #   the same musl version.
 
-    # Import IncludeOS musl which will be built and linked with IncludeOS services
-    musl-includeos = self.callPackage ./deps/musl/default.nix { };
+    # Unpatched musl, used for building llvm stdenv
+    musl-pinned = self.callPackage ./deps/musl-unpatched/default.nix {
+      stdenv = self.baseStdenv;
+      pkgs = self.basePkgs;
+      linuxHeaders = self.basePkgs.linuxHeaders;
+    };
 
-    # Clang with unpatched musl for building libcxx
-    clang_musl_unpatched_nolibcxx = self.llvmPkgs.clangNoLibcxx.override (old: {
-      bintools = prev.pkgsStatic.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-unpatched;
+    # IncludeOS-patched musl for the final stdenv
+    musl-includeos-patch = self.callPackage ./deps/musl/default.nix {
+      stdenv = self.baseStdenv;
+      pkgs = self.basePkgs;
+    };
+
+    # Rebuild llvm stdenv against musl-pinned
+    includeos_llvm = self.baseLLvmPkgs.override {
+      stdenv = final.mkStdenvCustomLibc {
+        libc = self.musl-pinned;
+        stdenv = self.baseStdenv;
       };
-      libc = self.musl-unpatched;
-    });
+    };
 
-    # Libcxx which will be built with unpatched musl
-    libcxx_musl_unpatched = self.llvmPkgs.libcxx.override (old: {
-      stdenv = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_unpatched_nolibcxx);
-    });
+    # IncludeOS stdenv that uses IncludeOS-musl, libc built against patched musl
+    includeos_stdenv = final.mkStdenvCustomLibc {
+      libc = self.musl-includeos-patch;
+      stdenv = self.baseStdenv;
+    };
 
-    # Final stdenv, use libcxx w/unpatched musl + includeos musl as libc
-    clang_musl_includeos_libcxx = self.llvmPkgs.libcxxClang.override (old: {
-      bintools = prev.pkgsStatic.bintools.override {
-        # Disable hardening flags while we work on the build
-        defaultHardeningFlags = [];
-        libc = self.musl-includeos;
-      };
-      libc = self.musl-includeos;
-      libcxx = self.libcxx_musl_unpatched;
-    });
-
-    musl_includeos_stdenv_libcxx = (prev.overrideCC self.llvmPkgs.libcxxStdenv self.clang_musl_includeos_libcxx);
-
-    includeos_stdenv = self.musl_includeos_stdenv_libcxx;
-
+    # Libraries collection
     libraries = {
-      libc = self.musl-includeos;
+      # libc built against patched musl
+      libc = self.includeos_stdenv.cc.libc;
+
+      # everything else built against pinned-musl
       libcxx = {
-        # There doesn't seem to be a single package containing both libc++ headers and libs.
-        lib = "${self.libcxx_musl_unpatched}/lib";
-        include = "${self.libcxx_musl_unpatched.dev}/include/c++/v1";
+        lib = "${self.includeos_llvm.libcxx}/lib";
+        include = "${self.includeos_llvm.libcxx.dev}/include/c++/v1";
       };
-      libunwind = self.llvmPkgs.libraries.libunwind;
-      libgcc = self.llvmPkgs.compiler-rt;
+      libunwind = self.includeos_llvm.libraries.libunwind;
+      libgcc = self.includeos_llvm.compiler-rt;
     };
   });
 
