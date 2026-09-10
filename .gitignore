@@ -57,3 +57,7 @@ lib/uplink/starbase/disk
 
 !Jenkinsfile
 !CHANGELOG
+
+# Ignore build outputs from nix-build
+result
+result-*
