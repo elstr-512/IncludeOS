@@ -16,14 +16,21 @@ let
   pkgs   = includeos.pkgs;
   stdenv = includeos.stdenv;
 
+  assertMsg      = pkgs.lib.asserts.assertMsg;
+  assertOneOf    = pkgs.lib.asserts.assertOneOf;
+
+  compilerEnv    = stdenv.hostPlatform;
+  targetPlatform = stdenv.targetPlatform;
 in
 
-assert (stdenv.targetPlatform.system != "i686-linux") ->
-  throw "Chainloader must be built as 32-bit target";
-assert (stdenv.targetPlatform.isLinux == false) ->
-  throw "Target platform must be Linux";
-assert (stdenv.targetPlatform.isMusl == false) ->
-  throw "Target stdenv should be based on Musl";
+assert assertMsg (targetPlatform.system == "i686-linux")
+"Chainloader must be built as 32-bit target";
+
+assert assertMsg targetPlatform.isLinux
+"Target platform must be Linux";
+
+assert assertMsg compilerEnv.isMusl
+"Stdenv should be based on Musl";
 
 stdenv.mkDerivation rec {
   pname = "chainloader";
