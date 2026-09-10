@@ -1,7 +1,20 @@
 {
-  withCcache, # Enable ccache. Requires correct permissions, see below.
-  disableTargetWarning ? true, # TODO: see https://github.com/NixOS/nixpkgs/issues/395191
-  smp,      # Enable multicore support (SMP)
+  # Access to build-platform packages.
+  nixpkgs ? ./pinned.nix,
+  defaultNixpkgs ? import nixpkgs {},
+
+  # Enable ccache.
+  # Requires correct permissions, see 'ccacheNoticeHook' 'ccacheWrapper' below.
+  withCcache ? false,
+
+  # TODO: see https://github.com/NixOS/nixpkgs/issues/395191
+  disableTargetWarning ? true,
+
+  # Enable multicore suport (SMP).
+  # WARN:
+  # While the SMP flag exists in the nix-config,
+  # it is currently always defined as ON in CMakelists.txt
+  smp ? false,
 } :
 final: prev: {
 
