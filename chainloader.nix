@@ -1,20 +1,15 @@
 {
-  withCcache ? false, # Enable ccache. Requires /nix/var/cache/ccache to exist with correct permissions.
+  # Enable ccache. Requires /nix/var/cache/ccache to exist with correct permissions.
+  withCcache ? false,
 
   nixpkgs ? ./pinned.nix,
-  overlays ? [
-    (import ./overlay.nix {
-      inherit withCcache;
-      smp = false; # No SMP for chainloader
-      disableTargetWarning = true;
-    })
-  ],
-  pkgs ? import nixpkgs {
-      config = { };
-      inherit overlays;
-      crossSystem = {
-        config = "i686-unknown-linux-musl";
-      };
+
+  arch ? "i686",
+
+  includeos ? import ./default.nix {
+    target = "${arch}";
+    inherit withCcache;
+    smp = false; # No SMP for chainloader
   },
 }:
 let
