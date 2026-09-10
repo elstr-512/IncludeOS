@@ -204,7 +204,7 @@ final: prev: {
         prev.pkgsStatic.http-parser
         prev.pkgsStatic.openssl
         prev.pkgsStatic.rapidjson
-        #self.s2n-tls          👈 This is postponed until we can fix the s2n build.
+        prev.pkgsStatic.s2n-tls
         self.libfmt
         self.lest
       ] ++ archBuildInputs;
