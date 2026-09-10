@@ -176,6 +176,9 @@ final: prev: {
 
       version = "dev";
 
+      # Disable PIE since IncludeOS is a static package
+      # (silences a meaningless compiler warning)
+      hardeningDisable = [ "pie" ];
 
       src = prev.lib.fileset.toSource {
           root = ./.;
