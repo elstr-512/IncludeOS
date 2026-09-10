@@ -117,13 +117,24 @@ final: prev: {
     stdenv = final.stdenvIncludeOS.includeos_stdenv;
     inherit suppressTargetWarningHook;
 
-    # Deps
+    # Access to stdenv pkgs
+    pkgs = final.stdenvIncludeOS.basePkgs;
+
+    # Dependencies which have to be rebuilt (or wrapped) to be compatible
     botan2 = self.callPackage ./deps/botan/default.nix { };
     libfmt = self.callPackage ./deps/libfmt/default.nix { };
-    s2n-tls = self.callPackage ./deps/s2n/default.nix { };
-    uzlib = self.callPackage ./deps/uzlib/default.nix { };
+    uzlib = self.callPackage ./deps/uzlib/default.nix { }; # not available in nix pkgs
+    lest = self.callPackage ./deps/lest { };
 
-    vmbuild = self.callPackage ./vmbuild.nix { };
+    # The chain loader (as in the service, not i686) depends on 'vmbuild'
+    # Has to be built for the build-platform (default environment)
+    # WARN:
+    # 'vmbuild' SHOULD be an external package, since it's a build-tool >:(
+    vmbuild = defaultNixpkgs.callPackage ./vmbuild.nix { };
+
+    # The x86_64 (64-bit) version of IncludeOS depends on the
+    # chainloader to boot on QEMU
+    chainloader = import ./chainloader.nix { inherit withCcache; };
 
     ccacheWrapper = prev.ccacheWrapper.override {
         inherit (self.stdenv) cc;
@@ -162,8 +173,6 @@ final: prev: {
 
       version = "dev";
 
-      # Convenient access to libc, libcxx etc
-      passthru.libraries = final.stdenvIncludeOS.libraries;
 
       src = prev.pkgsStatic.lib.fileset.toSource {
           root = ./.;
@@ -227,21 +236,34 @@ final: prev: {
       # Add some pasthroughs, for easily building the dependencies (for debugging):
       # $ nix-build -A NAME
 
-      passthru.vmrunner = prev.callPackage (builtins.fetchGit {
+      # Access to vmrunner. The tool runs on the build platform,
+      # and is therefore accessed through defaultNixpkgs.
+      passthru.vmrunner = defaultNixpkgs.callPackage (builtins.fetchGit {
           url = "https://github.com/includeos/vmrunner";
         }) {};
-      passthru.chainloader = import ./chainloader.nix { inherit withCcache; };
-      passthru.lest = self.callPackage ./deps/lest {};
-      passthru.pkgsStatic = prev.pkgsStatic; # this is for convenience for other packages that depend on includeos
-      passthru.pkgs = prev.pkgs; # this is for convenience for other packages that depend on includeos
 
-      passthru = {
+      # Access to chainloader
+      passthru.chainloader = self.chainloader;
+
+      # Convenient access to libc, libcxx etc
+      passthru.libraries = final.stdenvIncludeOS.libraries;
+
+      # Cross-build access to pkgs configured for the InlcudeOS-host
+      passthru.pkgs = self.pkgs;
+
+      # Access to IncludeOS dependencies
+      passthru.deps = {
         inherit (self) uzlib;
         inherit (self) botan2;
         inherit (self) libfmt;
         #inherit (self) s2n-tls;
-        inherit (self) cmake;
         inherit (self) vmbuild;
+        inherit (self) lest;
+      };
+
+      passthru.util = {
+        inherit suppressTargetWarningHook;
+        inherit (self) ccacheWrapper ;
       };
 
       meta = {
