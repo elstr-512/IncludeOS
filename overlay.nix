@@ -17,6 +17,22 @@
   smp ? false,
 } :
 final: prev: {
+  # Create stdenv with provided libc
+  mkStdenvCustomLibc = { libc, stdenv }:
+    let
+      # Rebuild bintools with new libc.
+      bintools = stdenv.cc.bintools.override { inherit libc; };
+    in
+      # Override the compiler with
+      # - the new libc
+      # - the new bintools
+      #
+      # Compiler and bintools are required to have the same libc.
+      stdenv.override {
+        cc = stdenv.cc.override {
+          inherit libc bintools;
+        };
+      };
 
   stdenvIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self: {
     llvmPkgs = prev.pkgsStatic.llvmPackages_20;
