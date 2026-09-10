@@ -61,6 +61,9 @@ includeos.stdenv.mkDerivation rec {
 
   buildInputs = [
     includeos
+  ];
+
+  propagatedBuildInputs = [
     includeos.chainloader
   ];
 
