@@ -45,7 +45,7 @@ let
     if vmrunner == "" then
       includeos.vmrunner
     else
-      includeos.pkgs.callPackage (builtins.toPath /. + vmrunner) {};
+      pkgs.callPackage (builtins.toPath /. + vmrunner) {};
 in
 includeos.stdenv.mkDerivation rec {
   pname = "includeos_example";
@@ -57,7 +57,7 @@ includeos.stdenv.mkDerivation rec {
   nativeBuildInputs = [
     includeos.pkgs.buildPackages.nasm
     includeos.pkgs.buildPackages.cmake
-  ] ++ [ includeos.pkgs.pkgsIncludeOS.suppressTargetWarningHook ];
+  ] ++ [ includeos.util.suppressTargetWarningHook ];
 
   buildInputs = [
     includeos
@@ -87,15 +87,15 @@ includeos.stdenv.mkDerivation rec {
 
   nativeCheckInputs = [
     includeos.vmrunner
-    includeos.pkgs.grub2
-    includeos.pkgs.python3
-    includeos.pkgs.qemu
-    includeos.pkgs.iputils
-    includeos.pkgs.xorriso
+    pkgs.grub2
+    pkgs.python3
+    pkgs.qemu
+    pkgs.iputils
+    pkgs.xorriso
   ];
 
   checkInputs = [
-    includeos.lest
+    includeos.deps.lest
   ];
 
   # use `nix-build --arg doCheck true` to run tests normally
@@ -118,7 +118,7 @@ includeos.stdenv.mkDerivation rec {
   # some tests need to be run through a shell because of net_cap_raw+ep and net_cap_admin+ep
   # replace nix-build with nix-shell to test without dropping capabilities
   packages = [
-    (includeos.pkgs.python3.withPackages (p: [
+    (pkgs.python3.withPackages (p: [
       vmrunnerPkg
     ]))
   ];
