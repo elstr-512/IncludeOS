@@ -21,7 +21,15 @@
   forProduction ? false,
 
   # The includeos library to build and link against
-  includeos ? import ./default.nix { inherit withCcache; inherit smp; },
+  includeos ? import ./default.nix {
+    target = "${arch}";
+    inherit withCcache;
+    inherit smp;
+  },
+
+  # Packages for the build platform
+  nixpkgs ? ./pinned.nix,
+  pkgs ? import nixpkgs {},
 
   # vmrunner path, for vmrunner development
   vmrunner ? "",
