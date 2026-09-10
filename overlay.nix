@@ -88,7 +88,7 @@ final: prev: {
     };
   });
 
-  pkgsIncludeOS = prev.pkgsStatic.lib.makeScope prev.pkgsStatic.newScope (self:
+  pkgsIncludeOS = prev.lib.makeScope prev.newScope (self:
     let
       ccacheNoticeHook = prev.writeTextFile {
         name = "ccache-notice-hook";
@@ -120,6 +120,9 @@ final: prev: {
     # Access to stdenv pkgs
     pkgs = final.stdenvIncludeOS.basePkgs;
 
+    # Architecture to build against
+    targetArch = self.stdenv.targetPlatform.uname.processor;
+
     # Dependencies which have to be rebuilt (or wrapped) to be compatible
     botan2 = self.callPackage ./deps/botan/default.nix { };
     libfmt = self.callPackage ./deps/libfmt/default.nix { };
@@ -136,7 +139,7 @@ final: prev: {
     # chainloader to boot on QEMU
     chainloader = import ./chainloader.nix { inherit withCcache; };
 
-    ccacheWrapper = prev.ccacheWrapper.override {
+    ccacheWrapper = prev.buildPackages.ccacheWrapper.override {
         inherit (self.stdenv) cc;
         extraConfig = ''
           export CCACHE_DIR="/nix/var/cache/ccache"
@@ -174,7 +177,7 @@ final: prev: {
       version = "dev";
 
 
-      src = prev.pkgsStatic.lib.fileset.toSource {
+      src = prev.lib.fileset.toSource {
           root = ./.;
           # Only include files needed by IncludeOS (not examples, docs etc)
           fileset = prev.pkgsStatic.lib.fileset.unions [
@@ -198,36 +201,85 @@ final: prev: {
         ++ prev.lib.optionals withCcache [self.ccacheWrapper ccacheNoticeHook];
 
       buildInputs = [
-        self.libfmt
-        self.botan2
         prev.pkgsStatic.http-parser
         prev.pkgsStatic.openssl
         prev.pkgsStatic.rapidjson
         #self.s2n-tls          👈 This is postponed until we can fix the s2n build.
-        self.uzlib
-        self.vmbuild
-      ];
+        self.libfmt
+        self.lest
+      ] ++ archBuildInputs;
+
+
+      # Propagate build-dependencies since IncludeOS is a library-OS
+      propagatedBuildInputs = buildInputs;
+
+      # Architecture-specific build inputs
+      archBuildInputs =
+        if self.targetArch == "x86_64" then
+          [
+            self.botan2
+            self.uzlib
+            self.vmbuild
+            self.chainloader
+          ]
+        else if self.targetArch == "i686" then
+          [
+            self.vmbuild
+          ]
+        else if self.targetArch == "aarch64" then
+          [
+            self.botan2
+            prev.pkgsStatic.dtc
+          ]
+        else [];
+
 
       postInstall = ''
-        echo Copying vmbuild binaries to tools/vmbuild
-        mkdir -p "$out/tools/vmbuild"
-        cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
-        cp -r -v ${final.stdenvIncludeOS.libraries.libc} $out/libc
-        mkdir $out/libcxx
-        cp -r -v ${final.stdenvIncludeOS.libraries.libcxx.lib} $out/libcxx/lib
-        cp -r -v ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
-        cp -r -v ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
-        cp -r -v ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
-        cp -r -v ${final.pkgsStatic.http-parser} $out/http-parser
+      cp -r  ${final.stdenvIncludeOS.libraries.libc} $out/libc
+
+      mkdir $out/libcxx
+      cp -r  ${final.stdenvIncludeOS.libraries.libcxx.lib} $out/libcxx/lib
+      cp -r  ${final.stdenvIncludeOS.libraries.libcxx.include} $out/libcxx/include
+      cp -r  ${final.stdenvIncludeOS.libraries.libunwind} $out/libunwind
+      cp -r  ${final.stdenvIncludeOS.libraries.libgcc} $out/libgcc
+
+      cp -r  ${final.pkgsStatic.http-parser} $out/http-parser
+
+      ''
+      + prev.lib.optionalString (self.targetArch == "x86_64") ''
+      mkdir -p "$out/tools/vmbuild"
+      cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
+
+      ''
+      + prev.lib.optionalString (self.targetArch == "i686") ''
+      mkdir -p "$out/tools/vmbuild"
+      cp -v ${self.vmbuild}/bin/* "$out/tools/vmbuild"
+
+      ''
+      + prev.lib.optionalString (self.targetArch == "aarch64") ''
+      mkdir -p $out/dtc/lib
+      cp -r  ${prev.pkgsStatic.dtc}/lib/libfdt.a $out/dtc/lib
+      cp -r  ${prev.pkgsStatic.dtc}/include $out/dtc/include
+
       '';
 
-      archFlags = if self.stdenv.targetPlatform.system == "i686-linux" then
-        [
-          "-DARCH=i686"
-          "-DPLATFORM=nano" # we currently only support nano platform on i686
-        ]
-      else
-        [ "-DARCH=x86_64"];
+      # Architecture-specific CMake flags
+      archFlags =
+        if self.targetArch == "i686" then
+          [
+            "-D ARCH=i686"
+            "-D PLATFORM=nano" # currently only support nano platform on i686
+          ]
+        else if self.targetArch == "x86_64" then
+          [
+            "-D ARCH=x86_64"
+          ]
+       else if self.targetArch == "aarch64" then
+         [
+           "-D ARCH=aarch64"
+         ]
+        else
+          [];
 
       smpFlags = if smp then [ "-DSMP=ON" ] else [];
 
