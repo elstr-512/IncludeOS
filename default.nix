@@ -20,6 +20,9 @@
 }:
 
 let
+  # default nix packages, so we can perform asserts even if provided target doesn't exist
+  defaultNixpkgs = import nixpkgs {};
+
   # cross compile configured nix packages
   supportedTargets.pkgs = {
     x86_64 = import nixpkgs {
@@ -41,10 +44,38 @@ let
   # Select pkgs configuration
   pkgs = supportedTargets.pkgs.${target};
 
+  # assert helpers
+  supportedTargets.name = [
+    "x86_64"
+    "aarch64"
+    "i686"
+  ];
+
+  supportedTargets.system = [
+    "x86_64-linux"
+    "aarch64-linux"
+    "i686-linux"
+  ];
+
+  assertMsg      = defaultNixpkgs.lib.asserts.assertMsg;
+  assertOneOf    = defaultNixpkgs.lib.asserts.assertOneOf;
+
+  buildPlatform  = pkgs.pkgsIncludeOS.stdenv.buildPlatform;
+  compilerEnv    = pkgs.pkgsIncludeOS.stdenv.hostPlatform;
+  targetPlatform = pkgs.pkgsIncludeOS.stdenv.targetPlatform;
+
 in
-  assert (pkgsIncludeOS.stdenv.buildPlatform.isLinux == false) ->
-    throw "Currently only Linux builds are supported";
-  assert (pkgsIncludeOS.stdenv.hostPlatform.isMusl == false) ->
-    throw "Stdenv should be based on Musl";
+
+# WARN: This assert must be at the top and evaluated first,
+# as an invalid target will break further evaluation.
+assert assertOneOf "--argstr target <string>" "${target}" supportedTargets.name;
+
+assert assertMsg buildPlatform.isLinux
+"Currently only Linux builds are supported";
+
+assert assertMsg compilerEnv.isMusl
+"Stdenv should be based on Musl";
+
+assert assertOneOf "crossSystem.system" targetPlatform.system supportedTargets.system;
 
 pkgs.pkgsIncludeOS.includeos
