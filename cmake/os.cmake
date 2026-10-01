@@ -22,6 +22,8 @@ endif()
 if (NOT DEFINED PLATFORM)
   if (DEFINED ENV{PLATFORM})
     set(PLATFORM $ENV{PLATFORM})
+  elseif("${ARCH}" STREQUAL "aarch64")
+    set(PLATFORM default)
   else()
     set(PLATFORM x86_pc)
   endif()
@@ -170,6 +172,19 @@ function(os_add_executable TARGET NAME)
     set(LIBGCC libclang_rt.builtins-${ARCH}.a)
   endif()
 
+  if (${ARCH} STREQUAL "aarch64")
+    set(LIBRARIES
+      ${INCLUDEOS_PACKAGE}/lib/libos.a
+      ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
+      ${INCLUDEOS_PACKAGE}/lib/libarch.a
+      ${INCLUDEOS_PACKAGE}/libcxx/lib/libc++.a
+      ${INCLUDEOS_PACKAGE}/libc/lib/libc.a
+      ${INCLUDEOS_PACKAGE}/lib/libmusl_syscalls.a
+      ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
+      ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
+      ${INCLUDEOS_PACKAGE}/dtc/lib/libfdt.a
+    )
+  else()
   set(LIBRARIES
     ${INCLUDEOS_PACKAGE}/lib/libos.a
     ${INCLUDEOS_PACKAGE}/platform/${LIBPLATFORM}
@@ -182,6 +197,7 @@ function(os_add_executable TARGET NAME)
     ${INCLUDEOS_PACKAGE}/libunwind/lib/libunwind.a
     ${INCLUDEOS_PACKAGE}/libgcc/lib/linux/${LIBGCC}
   )
+  endif()
 
   message(STATUS ">>>>> 👉 Libraries: ${LIBRARIES}")
   foreach(_LIB ${LIBRARIES})
