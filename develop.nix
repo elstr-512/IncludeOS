@@ -1,7 +1,8 @@
 # develop.nix
 # sets up a development shell in which you can open your editor
 {
-  buildpath ? "build",
+  # Path to build directory created by CMake.
+  buildpath ? "build-${arch}",
 
   # path to your unikernel source (project root with CMakeLists.txt)
   unikernel ? ".",
