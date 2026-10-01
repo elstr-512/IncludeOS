@@ -16,41 +16,53 @@
   # Enable multicore suport.
   smp ? false,
 
-  includeos ? import ./default.nix { inherit withCcache smp; },
+  # Target platform
+  arch ? "x86_64",
 
-  arch ? "x86_64"
+  # includeos derivation
+  includeos ? import ./default.nix {
+    target = "${arch}";
+    inherit withCcache;
+    inherit smp;
+  },
+
+  # packages for the build platform
+  nixpkgs ? ./pinned.nix,
+  pkgs ? import nixpkgs {},
 }:
 
 # override stdenv for furhter derivations so they're in sync with includeos patch requirements
-includeos.pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
+pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
   vmrunnerPkg =
     if vmrunner == "" then
       includeos.vmrunner
     else
-      includeos.pkgs.callPackage (builtins.toPath /. + vmrunner) {};
+      pkgs.callPackage (builtins.toPath /. + vmrunner) {};
 
-  # handy tools available in the shell
-  packages = [
-    (includeos.pkgs.python3.withPackages (p: [
-      vmrunnerPkg
-    ]))
+  # Build tools that run on the build platform, but are
+  # configured to target the host-architecture.
+  nativeBuildInputs = [
     includeos.pkgs.buildPackages.cmake
     includeos.pkgs.buildPackages.nasm
-    includeos.pkgs.qemu
-    includeos.pkgs.which
-    includeos.pkgs.grub2
-    includeos.pkgs.iputils
-    includeos.pkgs.xorriso
-    includeos.pkgs.jq
+  ];
+
+  # handy tools available in the shell
+  # configured to run on the shell/build-platform.
+  packages = [
+    (pkgs.python3.withPackages (p: [
+      vmrunnerPkg
+    ]))
+    pkgs.qemu
+    pkgs.which
+    pkgs.grub2
+    pkgs.iputils
+    pkgs.xorriso
+    pkgs.jq
   ];
 
   # libraries/headers we include against
   buildInputs = [
     includeos
-    includeos.chainloader
-    includeos.lest
-    includeos.pkgs.openssl
-    includeos.pkgs.rapidjson
   ];
 
   shellHook = ''
@@ -84,7 +96,7 @@ includeos.pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     jq \
       --arg libcxx "${includeos.libraries.libcxx.include}" \
       --arg libc "${includeos.libraries.libc}"             \
-      --arg libfmt "${includeos.passthru.libfmt.include}"  \
+      --arg libfmt "${includeos.deps.libfmt.include}"  \
       --arg localsrc "${toString ./.}"                     \
       '
       map(.command |= ( .
