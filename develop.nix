@@ -65,6 +65,10 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     includeos
   ];
 
+  propagatedBuildInputs = [
+    includeos.chainloader
+  ];
+
   shellHook = ''
     IOS_SRC=${toString ./.}
     if [ ! -d "$IOS_SRC" ]; then

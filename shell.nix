@@ -55,6 +55,10 @@ pkgs.mkShell.override { inherit (includeos) stdenv; } rec {
     includeos
   ];
 
+  propagatedBuildInputs = [
+    includeos.chainloader
+  ];
+
   shellHook = ''
     cat <<-EOF
 ================================== IncludeOS nix-shell ==================================
